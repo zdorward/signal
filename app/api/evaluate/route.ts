@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { anthropic } from '@/lib/anthropic';
-import type { Challenge, Submission, RubricItem } from '@/lib/types';
+import type { Challenge, Submission, Question, Answer } from '@/lib/types';
 
 export const maxDuration = 60;
 
@@ -10,183 +10,166 @@ export async function POST(request: Request) {
 
   try {
     const { submission_id } = await request.json();
-    console.log('[evaluate] Submission ID:', submission_id);
 
     if (!submission_id) {
-      console.log('[evaluate] ERROR: Missing submission_id');
       return NextResponse.json({ error: 'Missing submission_id' }, { status: 400 });
     }
 
     // Step 1: Fetch submission with challenge
-    console.log('[evaluate] Step 1: Fetching submission and challenge...');
     const { data: submission, error: subError } = await supabaseAdmin
       .from('submissions')
       .select('*, challenge:challenges(*)')
       .eq('id', submission_id)
       .single();
 
-    if (subError) {
-      console.log('[evaluate] ERROR fetching submission:', subError);
-      return NextResponse.json({ error: 'Submission not found', details: subError }, { status: 404 });
-    }
-
-    if (!submission) {
-      console.log('[evaluate] ERROR: Submission is null');
+    if (subError || !submission) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
-
-    console.log('[evaluate] Submission fetched successfully:', {
-      id: submission.id,
-      candidate_name: submission.candidate_name,
-      hasChallenge: !!submission.challenge
-    });
 
     const challenge = Array.isArray(submission.challenge)
       ? submission.challenge[0]
       : submission.challenge;
 
     if (!challenge) {
-      console.log('[evaluate] ERROR: Challenge not found in submission');
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
     }
 
-    console.log('[evaluate] Challenge fetched successfully:', {
-      id: challenge.id,
-      role_description: challenge.role_description?.substring(0, 50) + '...'
-    });
-
     const typedSubmission = submission as unknown as Submission;
     const typedChallenge = challenge as Challenge;
-    const rubric = typedChallenge.rubric_json as RubricItem[];
+    const questions = typedChallenge.questions_json as Question[];
+    const answers = typedSubmission.answers_json as Answer[];
 
-    console.log('[evaluate] Rubric items:', rubric?.length || 0);
+    // Step 2: Check URL and fetch content for relevance check
+    let urlPassed = false;
+    let urlNotes = '';
+    let pageContent = '';
 
-    // Step 2: Check if demo URL resolves
-    console.log('[evaluate] Step 2: Checking demo URL...');
-    let demoUrlStatus = { resolves: false, statusCode: 0, error: '' };
     try {
-      const urlCheck = await fetch(typedSubmission.demo_url, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000),
+      const urlResponse = await fetch(typedSubmission.demo_url, {
+        signal: AbortSignal.timeout(10000),
+        headers: { 'User-Agent': 'Signal-Evaluation-Bot/1.0' },
       });
-      demoUrlStatus = { resolves: urlCheck.ok, statusCode: urlCheck.status, error: '' };
-      console.log('[evaluate] Demo URL status:', demoUrlStatus);
+
+      if (urlResponse.ok) {
+        const contentType = urlResponse.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+          const html = await urlResponse.text();
+          // Extract text content (simple extraction)
+          pageContent = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .substring(0, 2000);
+        }
+        urlPassed = true;
+        urlNotes = `URL resolves (HTTP ${urlResponse.status})`;
+      } else {
+        urlNotes = `URL returned HTTP ${urlResponse.status}`;
+      }
     } catch (urlError) {
-      demoUrlStatus = {
-        resolves: false,
-        statusCode: 0,
-        error: urlError instanceof Error ? urlError.message : 'Failed to fetch',
-      };
-      console.log('[evaluate] Demo URL check failed:', demoUrlStatus.error);
+      urlNotes = `URL check failed: ${urlError instanceof Error ? urlError.message : 'Unknown error'}`;
     }
 
-    // Step 3: Call Claude API
-    console.log('[evaluate] Step 3: Calling Claude API...');
+    // Step 3: Build evaluation prompt
+    const systemPrompt = `You are an expert evaluator assessing candidate responses.
 
-    const systemPrompt = `You are an expert technical evaluator. Evaluate the candidate's submission against the provided rubric.
+SCORING SCALE (use the full range):
+5 - Exceeds expectations: Thoughtful, specific, demonstrates real understanding. Does NOT require perfection.
+4 - Meets expectations: Solid answer that addresses the question well.
+3 - Adequate: Answers the question but lacks depth or specificity.
+2 - Weak: Partially addresses the question, missing key elements.
+1 - Poor: Doesn't answer the question, generic, or off-topic.
 
-For each criterion, provide:
-- score: 0-100
-- reasoning: Brief explanation
+CALIBRATION RULES:
+- If an answer directly addresses the criterion with specific, relevant detail, score it 4 or 5.
+- A 5 doesn't mean perfect - it means thoughtful and specific.
+- Only score 1-2 for answers that genuinely miss the mark.
+- Evaluate against the criterion ONLY. Don't impose unstated requirements.
 
-Also provide:
-- summary_bullets: 3-5 key takeaways
-- worth_human_attention: true if promising candidate, false if clear reject
-- flag_reason: If flagged, explain why (null otherwise)
-- rejection_draft: A polite, constructive rejection email (always include)
-- demo_url_notes: Brief note about the demo URL (e.g., "URL resolves successfully" or "URL returned 404")
-
-IMPORTANT: Respond with RAW JSON only. No markdown code blocks. Just the JSON object.
-
+OUTPUT FORMAT (raw JSON only, no markdown):
 {
-  "rubric_scores_json": [{"criterion": "...", "score": 85, "reasoning": "..."}],
-  "summary_bullets": ["Point 1", "Point 2"],
+  "criterion_scores": [
+    {"criterion_id": "...", "question_id": "...", "score": 4, "reasoning": "Brief explanation"}
+  ],
+  "url_relevant": true,
+  "url_relevance_note": "Brief note about whether URL content matches challenge requirements",
+  "summary_bullets": ["Key takeaway 1", "Key takeaway 2", "Key takeaway 3"],
   "worth_human_attention": true,
   "flag_reason": null,
-  "rejection_draft": "Dear candidate...",
-  "demo_url_notes": "URL resolves successfully"
+  "rejection_draft": "Dear [name],\\n\\nThank you for..."
 }`;
 
-    const userPrompt = `## Challenge
-${typedChallenge.challenge_text}
+    // Build question/answer pairs with criteria
+    let questionsSection = '';
+    for (const question of questions) {
+      const answer = answers.find((a) => a.question_id === question.id);
+      questionsSection += `\n## Question: ${question.text}\n`;
+      questionsSection += `Candidate's Answer: ${answer?.text || '(No answer provided)'}\n`;
+      questionsSection += `\nEvaluate against these criteria:\n`;
+      for (const criterion of question.criteria) {
+        questionsSection += `- [${criterion.id}] ${criterion.text}\n`;
+      }
+    }
 
-## Rubric
-${rubric.map((r) => `- ${r.criterion} (${r.weight}%): ${r.description}`).join('\n')}
+    const userPrompt = `## Challenge Context
+Role: ${typedChallenge.role_description}
+${typedChallenge.challenge_requirements ? `Requirements: ${typedChallenge.challenge_requirements}` : ''}
 
-## Candidate Submission
+## Candidate
 Name: ${typedSubmission.candidate_name}
 Demo URL: ${typedSubmission.demo_url}
-Demo URL Check: ${demoUrlStatus.resolves ? `Resolves (HTTP ${demoUrlStatus.statusCode})` : `Does not resolve${demoUrlStatus.error ? ` - ${demoUrlStatus.error}` : demoUrlStatus.statusCode ? ` (HTTP ${demoUrlStatus.statusCode})` : ''}`}
-${typedSubmission.video_path ? `Video: ${typedSubmission.video_path}` : ''}
+URL Status: ${urlNotes}
+${pageContent ? `Page Content Preview: ${pageContent.substring(0, 500)}...` : ''}
 
-Written Explanation:
-${typedSubmission.written_explanation}`;
+## Questions and Answers
+${questionsSection}
 
-    let response;
-    try {
-      response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      });
-      console.log('[evaluate] Claude API call successful');
-      console.log('[evaluate] Response stop_reason:', response.stop_reason);
-      console.log('[evaluate] Response content type:', response.content[0]?.type);
-    } catch (claudeError) {
-      console.log('[evaluate] ERROR calling Claude API:', claudeError);
-      return NextResponse.json({
-        error: 'Claude API call failed',
-        details: claudeError instanceof Error ? claudeError.message : String(claudeError)
-      }, { status: 500 });
-    }
+Evaluate each criterion and provide scores.`;
+
+    // Step 4: Call Claude
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
 
     const content = response.content[0];
     if (content.type !== 'text') {
-      console.log('[evaluate] ERROR: Unexpected response type:', content.type);
       return NextResponse.json({ error: 'Unexpected response type' }, { status: 500 });
     }
 
-    console.log('[evaluate] Claude response text (first 500 chars):', content.text.substring(0, 500));
-
-    // Step 4: Parse Claude response
-    console.log('[evaluate] Step 4: Parsing Claude response...');
+    // Step 5: Parse response
     let evaluation;
     try {
-      // Strip markdown code blocks if present
       let jsonText = content.text.trim();
       if (jsonText.startsWith('```')) {
         jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
       }
       evaluation = JSON.parse(jsonText);
-      console.log('[evaluate] JSON parsed successfully');
-      console.log('[evaluate] Evaluation keys:', Object.keys(evaluation));
     } catch (parseError) {
-      console.log('[evaluate] ERROR parsing JSON:', parseError);
-      console.log('[evaluate] Full response text:', content.text);
-      return NextResponse.json({
-        error: 'Failed to parse evaluation JSON',
-        details: parseError instanceof Error ? parseError.message : String(parseError),
-        rawResponse: content.text.substring(0, 1000)
-      }, { status: 500 });
+      console.error('[evaluate] Parse error:', parseError, content.text);
+      return NextResponse.json({ error: 'Failed to parse evaluation' }, { status: 500 });
     }
 
-    // Step 5: Insert evaluation into Supabase
-    console.log('[evaluate] Step 5: Inserting evaluation into Supabase...');
-    console.log('[evaluate] Evaluation data:', {
-      submission_id,
-      rubric_scores_count: evaluation.rubric_scores_json?.length,
-      summary_bullets_count: evaluation.summary_bullets?.length,
-      worth_human_attention: evaluation.worth_human_attention,
-      has_flag_reason: !!evaluation.flag_reason,
-      has_rejection_draft: !!evaluation.rejection_draft
-    });
+    // Update URL status based on AI relevance check
+    if (urlPassed && evaluation.url_relevant === false) {
+      urlPassed = false;
+      urlNotes = evaluation.url_relevance_note || 'URL content does not match challenge requirements';
+    } else if (urlPassed && evaluation.url_relevance_note) {
+      urlNotes = evaluation.url_relevance_note;
+    }
 
+    // Step 6: Save evaluation
     const { data: evalData, error: evalError } = await supabaseAdmin
       .from('evaluations')
       .insert({
         submission_id,
-        rubric_scores_json: evaluation.rubric_scores_json,
+        criterion_scores_json: evaluation.criterion_scores,
+        url_passed: urlPassed,
+        url_notes: urlNotes,
         summary_bullets: evaluation.summary_bullets,
         worth_human_attention: evaluation.worth_human_attention,
         flag_reason: evaluation.flag_reason || null,
@@ -196,21 +179,12 @@ ${typedSubmission.written_explanation}`;
       .single();
 
     if (evalError) {
-      console.log('[evaluate] ERROR inserting evaluation:', evalError);
-      return NextResponse.json({
-        error: 'Failed to save evaluation',
-        details: evalError
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to save evaluation' }, { status: 500 });
     }
 
-    console.log('[evaluate] Evaluation saved successfully:', evalData.id);
     return NextResponse.json(evalData, { status: 201 });
-
   } catch (error) {
-    console.log('[evaluate] UNHANDLED ERROR:', error);
-    return NextResponse.json({
-      error: 'Unhandled error in evaluate',
-      details: error instanceof Error ? error.message : String(error)
-    }, { status: 500 });
+    console.error('[evaluate] Unhandled error:', error);
+    return NextResponse.json({ error: 'Evaluation failed' }, { status: 500 });
   }
 }
