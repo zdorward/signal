@@ -66,3 +66,17 @@ export async function POST(request: Request) {
 
   return NextResponse.json(data, { status: 201 });
 }
+
+export async function DELETE() {
+  // Delete all submissions (evaluations will cascade due to ON DELETE CASCADE)
+  const { error } = await supabaseAdmin
+    .from('submissions')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

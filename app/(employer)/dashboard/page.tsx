@@ -6,9 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
 } from '@/components/ui/card';
 import {
@@ -33,15 +30,19 @@ function calculateAverageScore(scores: CriterionScore[]): number {
   return Math.round((sum / scores.length) * 10) / 10;
 }
 
+function getJobNumber(id: string): string {
+  return id.substring(0, 8).toUpperCase();
+}
+
 export default function DashboardPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionWithEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [generatingRejection, setGeneratingRejection] = useState<string | null>(
-    null
-  );
+  const [expandedChallengeId, setExpandedChallengeId] = useState<string | null>(null);
+  const [generatingRejection, setGeneratingRejection] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchChallenges = async () => {
     try {
@@ -73,11 +74,47 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const copyApplyLink = (challengeId: string) => {
+  const copyApplyLink = (e: React.MouseEvent, challengeId: string) => {
+    e.stopPropagation();
     const link = `${window.location.origin}/apply/${challengeId}`;
     navigator.clipboard.writeText(link);
     setCopiedId(challengeId);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const deleteChallenge = async (e: React.MouseEvent, challengeId: string) => {
+    e.stopPropagation();
+    if (!confirm('Delete this position? This will also delete all submissions.')) return;
+
+    setDeletingId(challengeId);
+    try {
+      const response = await fetch(`/api/challenges/${challengeId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setChallenges((prev) => prev.filter((c) => c.id !== challengeId));
+        setSubmissions((prev) => prev.filter((s) => s.challenge_id !== challengeId));
+      }
+    } catch (error) {
+      console.error('Failed to delete challenge:', error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const clearAllSubmissions = async () => {
+    if (!confirm('Clear ALL submissions? This cannot be undone.')) return;
+
+    try {
+      const response = await fetch('/api/submissions', {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setSubmissions([]);
+      }
+    } catch (error) {
+      console.error('Failed to clear submissions:', error);
+    }
   };
 
   const handleGenerateRejection = async (submissionId: string) => {
@@ -107,67 +144,43 @@ export default function DashboardPage() {
     }
   };
 
+  // Sort submissions: needs review first, then by score descending
+  const sortedSubmissions = [...submissions].sort((a, b) => {
+    const aReview = a.evaluation?.worth_human_attention ? 1 : 0;
+    const bReview = b.evaluation?.worth_human_attention ? 1 : 0;
+    if (bReview !== aReview) return bReview - aReview;
+
+    const aScore = a.evaluation ? calculateAverageScore(a.evaluation.criterion_scores_json as CriterionScore[]) : 0;
+    const bScore = b.evaluation ? calculateAverageScore(b.evaluation.criterion_scores_json as CriterionScore[]) : 0;
+    return bScore - aScore;
+  });
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
 
   return (
     <div className="space-y-8">
-      {/* Challenges Section */}
+      {/* Positions Section */}
       <div>
-        <h1 className="text-2xl font-bold">Your Challenges</h1>
-        <p className="text-gray-600 mb-4">Share these links with candidates.</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Open Positions</h1>
+            <p className="text-gray-600">Manage your job postings and application links.</p>
+          </div>
+          <Button onClick={() => (window.location.href = '/create')}>
+            + New Position
+          </Button>
+        </div>
 
         {challenges.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-gray-500">
-              No challenges yet.{' '}
+              No positions yet.{' '}
               <a href="/create" className="text-blue-600 hover:underline">
-                Create your first challenge
+                Create your first position
               </a>
               .
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.map((challenge) => (
-              <Card key={challenge.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base line-clamp-2">
-                    {challenge.role_description}
-                  </CardTitle>
-                  <CardDescription>
-                    Created {new Date(challenge.created_at).toLocaleDateString()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => copyApplyLink(challenge.id)}
-                  >
-                    {copiedId === challenge.id ? 'Copied!' : 'Copy Apply Link'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Submissions Section */}
-      <div>
-        <h2 className="text-xl font-bold">Submissions</h2>
-        <p className="text-gray-600 mb-4">
-          Review candidate submissions and AI evaluations.
-        </p>
-
-        {submissions.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-gray-500">
-              No submissions yet. Share challenge links with candidates to get
-              started.
             </CardContent>
           </Card>
         ) : (
@@ -175,16 +188,131 @@ export default function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Candidate</TableHead>
-                  <TableHead>Challenge</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="w-24">Job #</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead className="w-32">Created</TableHead>
+                  <TableHead className="w-48 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissions.map((submission) => {
+                {challenges.map((challenge) => (
+                  <>
+                    <TableRow
+                      key={challenge.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() =>
+                        setExpandedChallengeId(
+                          expandedChallengeId === challenge.id ? null : challenge.id
+                        )
+                      }
+                    >
+                      <TableCell className="font-mono text-sm">
+                        {getJobNumber(challenge.id)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {challenge.role_description}
+                      </TableCell>
+                      <TableCell className="text-gray-500">
+                        {new Date(challenge.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => copyApplyLink(e, challenge.id)}
+                        >
+                          {copiedId === challenge.id ? 'Copied!' : 'Copy Link'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={(e) => deleteChallenge(e, challenge.id)}
+                          disabled={deletingId === challenge.id}
+                        >
+                          {deletingId === challenge.id ? '...' : 'Delete'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {expandedChallengeId === challenge.id && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="bg-gray-50 p-0">
+                          <div className="p-6 space-y-4">
+                            {challenge.intro_text && (
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-500 mb-1">Introduction</h4>
+                                <p className="text-gray-700">{challenge.intro_text}</p>
+                              </div>
+                            )}
+                            {challenge.challenge_text && (
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-500 mb-1">Challenge</h4>
+                                <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                                  {challenge.challenge_text}
+                                </div>
+                              </div>
+                            )}
+                            {challenge.questions_json && challenge.questions_json.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-500 mb-2">Questions</h4>
+                                <ul className="space-y-2">
+                                  {(challenge.questions_json as Question[]).map((q, i) => (
+                                    <li key={q.id} className="text-gray-700">
+                                      <span className="font-medium">Q{i + 1}:</span> {q.text}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+      </div>
+
+      {/* Submissions Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold">Applications</h2>
+            <p className="text-gray-600">
+              Review candidate submissions and AI evaluations.
+            </p>
+          </div>
+          {submissions.length > 0 && (
+            <Button variant="outline" size="sm" onClick={clearAllSubmissions}>
+              Clear All (Testing)
+            </Button>
+          )}
+        </div>
+
+        {submissions.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-gray-500">
+              No applications yet. Share position links with candidates to get started.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-24">Job #</TableHead>
+                  <TableHead>Candidate</TableHead>
+                  <TableHead className="w-28">Questions</TableHead>
+                  <TableHead className="w-20">URL</TableHead>
+                  <TableHead className="w-28">Review</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedSubmissions.map((submission) => {
                   const avgScore = submission.evaluation
                     ? calculateAverageScore(
                         submission.evaluation.criterion_scores_json as CriterionScore[]
@@ -201,11 +329,11 @@ export default function DashboardPage() {
                         )
                       }
                     >
+                      <TableCell className="font-mono text-sm">
+                        {submission.challenge ? getJobNumber(submission.challenge.id) : '-'}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {submission.candidate_name}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {submission.challenge?.role_description || 'Unknown'}
                       </TableCell>
                       <TableCell>
                         {avgScore !== null ? (
@@ -221,7 +349,7 @@ export default function DashboardPage() {
                             {avgScore}/5
                           </Badge>
                         ) : (
-                          '-'
+                          <Badge variant="outline">Pending</Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -238,12 +366,14 @@ export default function DashboardPage() {
                       <TableCell>
                         {submission.evaluation ? (
                           submission.evaluation.worth_human_attention ? (
-                            <Badge variant="default">Review</Badge>
+                            <Badge variant="default" className="bg-amber-500">
+                              Needs Review
+                            </Badge>
                           ) : (
-                            <Badge variant="secondary">Evaluated</Badge>
+                            <span className="text-gray-400">-</span>
                           )
                         ) : (
-                          <Badge variant="outline">Pending</Badge>
+                          '-'
                         )}
                       </TableCell>
                       <TableCell>
