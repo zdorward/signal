@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -28,11 +28,7 @@ export default function ApplyPage() {
 
   const { startUpload } = useUploadThing('videoUploader');
 
-  useEffect(() => {
-    fetchChallenge();
-  }, [challengeId]);
-
-  const fetchChallenge = async () => {
+  const fetchChallenge = useCallback(async () => {
     try {
       const response = await fetch('/api/challenges');
       const challenges = await response.json();
@@ -47,7 +43,11 @@ export default function ApplyPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [challengeId]);
+
+  useEffect(() => {
+    fetchChallenge();
+  }, [fetchChallenge]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
