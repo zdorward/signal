@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -13,14 +19,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Challenge, SubmissionWithEvaluation, RubricScore } from '@/lib/types';
+import type {
+  Challenge,
+  SubmissionWithEvaluation,
+  CriterionScore,
+  Question,
+  Answer,
+} from '@/lib/types';
+
+function calculateAverageScore(scores: CriterionScore[]): number {
+  if (!scores || scores.length === 0) return 0;
+  const sum = scores.reduce((acc, s) => acc + s.score, 0);
+  return Math.round((sum / scores.length) * 10) / 10;
+}
 
 export default function DashboardPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionWithEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [generatingRejection, setGeneratingRejection] = useState<string | null>(null);
+  const [generatingRejection, setGeneratingRejection] = useState<string | null>(
+    null
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchChallenges = async () => {
@@ -51,7 +71,6 @@ export default function DashboardPage() {
     loadData();
     const interval = setInterval(fetchSubmissions, 10000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const copyApplyLink = (challengeId: string) => {
@@ -74,7 +93,10 @@ export default function DashboardPage() {
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === submissionId && s.evaluation
-            ? { ...s, evaluation: { ...s.evaluation, rejection_draft: data.rejection_draft } }
+            ? {
+                ...s,
+                evaluation: { ...s.evaluation, rejection_draft: data.rejection_draft },
+              }
             : s
         )
       );
@@ -99,7 +121,11 @@ export default function DashboardPage() {
         {challenges.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-gray-500">
-              No challenges yet. <a href="/create" className="text-blue-600 hover:underline">Create your first challenge</a>.
+              No challenges yet.{' '}
+              <a href="/create" className="text-blue-600 hover:underline">
+                Create your first challenge
+              </a>
+              .
             </CardContent>
           </Card>
         ) : (
@@ -133,12 +159,15 @@ export default function DashboardPage() {
       {/* Submissions Section */}
       <div>
         <h2 className="text-xl font-bold">Submissions</h2>
-        <p className="text-gray-600 mb-4">Review candidate submissions and AI evaluations.</p>
+        <p className="text-gray-600 mb-4">
+          Review candidate submissions and AI evaluations.
+        </p>
 
         {submissions.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-gray-500">
-              No submissions yet. Share challenge links with candidates to get started.
+              No submissions yet. Share challenge links with candidates to get
+              started.
             </CardContent>
           </Card>
         ) : (
@@ -148,49 +177,83 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableHead>Candidate</TableHead>
                   <TableHead>Challenge</TableHead>
-                  <TableHead>Submitted</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>URL</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Attention</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissions.map((submission) => (
-                  <TableRow
-                    key={submission.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() =>
-                      setExpandedId(expandedId === submission.id ? null : submission.id)
-                    }
-                  >
-                    <TableCell className="font-medium">
-                      {submission.candidate_name}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {submission.challenge?.role_description || 'Unknown'}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(submission.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {submission.evaluation ? (
-                        <Badge variant="default">Evaluated</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {submission.evaluation?.worth_human_attention && (
-                        <Badge variant="destructive">Review</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        {expandedId === submission.id ? '▲' : '▼'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {submissions.map((submission) => {
+                  const avgScore = submission.evaluation
+                    ? calculateAverageScore(
+                        submission.evaluation.criterion_scores_json as CriterionScore[]
+                      )
+                    : null;
+
+                  return (
+                    <TableRow
+                      key={submission.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() =>
+                        setExpandedId(
+                          expandedId === submission.id ? null : submission.id
+                        )
+                      }
+                    >
+                      <TableCell className="font-medium">
+                        {submission.candidate_name}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {submission.challenge?.role_description || 'Unknown'}
+                      </TableCell>
+                      <TableCell>
+                        {avgScore !== null ? (
+                          <Badge
+                            variant={
+                              avgScore >= 4
+                                ? 'default'
+                                : avgScore >= 3
+                                ? 'secondary'
+                                : 'destructive'
+                            }
+                          >
+                            {avgScore}/5
+                          </Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {submission.evaluation ? (
+                          submission.evaluation.url_passed ? (
+                            <span className="text-green-600">✓</span>
+                          ) : (
+                            <span className="text-red-500">✗</span>
+                          )
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {submission.evaluation ? (
+                          submission.evaluation.worth_human_attention ? (
+                            <Badge variant="default">Review</Badge>
+                          ) : (
+                            <Badge variant="secondary">Evaluated</Badge>
+                          )
+                        ) : (
+                          <Badge variant="outline">Pending</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          {expandedId === submission.id ? '▲' : '▼'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </Card>
@@ -207,9 +270,17 @@ export default function DashboardPage() {
               {(() => {
                 const submission = submissions.find((s) => s.id === expandedId);
                 if (!submission) return null;
+
+                const questions = (submission.challenge?.questions_json ||
+                  []) as Question[];
+                const answers = (submission.answers_json || []) as Answer[];
+                const criterionScores = (submission.evaluation
+                  ?.criterion_scores_json || []) as CriterionScore[];
+
                 return (
                   <Card>
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="p-6 space-y-6">
+                      {/* URL and Video */}
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
                           <h4 className="font-semibold mb-2">Demo URL</h4>
@@ -221,6 +292,11 @@ export default function DashboardPage() {
                           >
                             {submission.demo_url}
                           </a>
+                          {submission.evaluation && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {submission.evaluation.url_notes}
+                            </p>
+                          )}
                         </div>
                         {submission.video_path && (
                           <div>
@@ -237,59 +313,88 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      <div>
-                        <h4 className="font-semibold mb-2">Written Explanation</h4>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {submission.written_explanation}
-                        </p>
+                      {/* Questions and Answers with Scores */}
+                      <div className="space-y-6">
+                        <h4 className="font-semibold">Questions & Answers</h4>
+                        {questions.map((question) => {
+                          const answer = answers.find(
+                            (a) => a.question_id === question.id
+                          );
+                          const questionScores = criterionScores.filter(
+                            (s) => s.question_id === question.id
+                          );
+
+                          return (
+                            <div
+                              key={question.id}
+                              className="border rounded-lg p-4 space-y-3"
+                            >
+                              <p className="font-medium text-gray-900">
+                                {question.text}
+                              </p>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                {answer?.text || '(No answer)'}
+                              </p>
+
+                              {questionScores.length > 0 && (
+                                <div className="pt-2 border-t space-y-2">
+                                  <p className="text-xs font-medium text-gray-500 uppercase">
+                                    Evaluation
+                                  </p>
+                                  {questionScores.map((score) => {
+                                    const criterion = question.criteria.find(
+                                      (c) => c.id === score.criterion_id
+                                    );
+                                    return (
+                                      <div
+                                        key={score.criterion_id}
+                                        className="flex items-start gap-3"
+                                      >
+                                        <Badge
+                                          variant={
+                                            score.score >= 4
+                                              ? 'default'
+                                              : score.score >= 3
+                                              ? 'secondary'
+                                              : 'destructive'
+                                          }
+                                          className="shrink-0"
+                                        >
+                                          {score.score}/5
+                                        </Badge>
+                                        <div className="text-sm">
+                                          <span className="font-medium">
+                                            {criterion?.text || 'Criterion'}:
+                                          </span>{' '}
+                                          <span className="text-gray-600">
+                                            {score.reasoning}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {submission.evaluation && (
                         <>
-                          <div>
-                            <h4 className="font-semibold mb-2">Rubric Scores</h4>
-                            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                              {(submission.evaluation.rubric_scores_json as RubricScore[]).map(
-                                (score) => (
-                                  <Card key={score.criterion}>
-                                    <CardHeader className="py-3">
-                                      <div className="flex justify-between">
-                                        <CardTitle className="text-sm">
-                                          {score.criterion}
-                                        </CardTitle>
-                                        <Badge
-                                          variant={
-                                            score.score >= 70
-                                              ? 'default'
-                                              : score.score >= 50
-                                              ? 'secondary'
-                                              : 'destructive'
-                                          }
-                                        >
-                                          {score.score}
-                                        </Badge>
-                                      </div>
-                                    </CardHeader>
-                                    <CardContent className="py-2">
-                                      <p className="text-xs text-gray-600">
-                                        {score.reasoning}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                )
-                              )}
-                            </div>
-                          </div>
-
+                          {/* Summary */}
                           <div>
                             <h4 className="font-semibold mb-2">Summary</h4>
                             <ul className="list-disc list-inside text-sm text-gray-700">
-                              {submission.evaluation.summary_bullets.map((bullet, i) => (
-                                <li key={i}>{bullet}</li>
-                              ))}
+                              {submission.evaluation.summary_bullets.map(
+                                (bullet, i) => (
+                                  <li key={i}>{bullet}</li>
+                                )
+                              )}
                             </ul>
                           </div>
 
+                          {/* Flag Reason */}
                           {submission.evaluation.flag_reason && (
                             <div className="bg-yellow-50 p-3 rounded">
                               <h4 className="font-semibold text-yellow-800">
@@ -301,6 +406,7 @@ export default function DashboardPage() {
                             </div>
                           )}
 
+                          {/* Rejection Draft */}
                           <div>
                             <div className="flex items-center gap-4 mb-2">
                               <h4 className="font-semibold">Rejection Draft</h4>
