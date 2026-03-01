@@ -30,6 +30,7 @@ CREATE TABLE evaluations (
   worth_human_attention BOOLEAN NOT NULL,
   flag_reason TEXT,
   rejection_draft TEXT,
+  demo_url_notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

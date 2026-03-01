@@ -61,8 +61,27 @@ export async function POST(request: Request) {
 
     console.log('[evaluate] Rubric items:', rubric?.length || 0);
 
-    // Step 2: Call Claude API
-    console.log('[evaluate] Step 2: Calling Claude API...');
+    // Step 2: Check if demo URL resolves
+    console.log('[evaluate] Step 2: Checking demo URL...');
+    let demoUrlStatus = { resolves: false, statusCode: 0, error: '' };
+    try {
+      const urlCheck = await fetch(typedSubmission.demo_url, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000),
+      });
+      demoUrlStatus = { resolves: urlCheck.ok, statusCode: urlCheck.status, error: '' };
+      console.log('[evaluate] Demo URL status:', demoUrlStatus);
+    } catch (urlError) {
+      demoUrlStatus = {
+        resolves: false,
+        statusCode: 0,
+        error: urlError instanceof Error ? urlError.message : 'Failed to fetch',
+      };
+      console.log('[evaluate] Demo URL check failed:', demoUrlStatus.error);
+    }
+
+    // Step 3: Call Claude API
+    console.log('[evaluate] Step 3: Calling Claude API...');
 
     const systemPrompt = `You are an expert technical evaluator. Evaluate the candidate's submission against the provided rubric.
 
@@ -75,6 +94,7 @@ Also provide:
 - worth_human_attention: true if promising candidate, false if clear reject
 - flag_reason: If flagged, explain why (null otherwise)
 - rejection_draft: A polite, constructive rejection email (always include)
+- demo_url_notes: Brief note about the demo URL (e.g., "URL resolves successfully" or "URL returned 404")
 
 IMPORTANT: Respond with RAW JSON only. No markdown code blocks. Just the JSON object.
 
@@ -83,7 +103,8 @@ IMPORTANT: Respond with RAW JSON only. No markdown code blocks. Just the JSON ob
   "summary_bullets": ["Point 1", "Point 2"],
   "worth_human_attention": true,
   "flag_reason": null,
-  "rejection_draft": "Dear candidate..."
+  "rejection_draft": "Dear candidate...",
+  "demo_url_notes": "URL resolves successfully"
 }`;
 
     const userPrompt = `## Challenge
@@ -95,6 +116,7 @@ ${rubric.map((r) => `- ${r.criterion} (${r.weight}%): ${r.description}`).join('\
 ## Candidate Submission
 Name: ${typedSubmission.candidate_name}
 Demo URL: ${typedSubmission.demo_url}
+Demo URL Check: ${demoUrlStatus.resolves ? `Resolves (HTTP ${demoUrlStatus.statusCode})` : `Does not resolve${demoUrlStatus.error ? ` - ${demoUrlStatus.error}` : demoUrlStatus.statusCode ? ` (HTTP ${demoUrlStatus.statusCode})` : ''}`}
 ${typedSubmission.video_path ? `Video: ${typedSubmission.video_path}` : ''}
 
 Written Explanation:
@@ -127,8 +149,8 @@ ${typedSubmission.written_explanation}`;
 
     console.log('[evaluate] Claude response text (first 500 chars):', content.text.substring(0, 500));
 
-    // Step 3: Parse Claude response
-    console.log('[evaluate] Step 3: Parsing Claude response...');
+    // Step 4: Parse Claude response
+    console.log('[evaluate] Step 4: Parsing Claude response...');
     let evaluation;
     try {
       // Strip markdown code blocks if present
@@ -149,8 +171,8 @@ ${typedSubmission.written_explanation}`;
       }, { status: 500 });
     }
 
-    // Step 4: Insert evaluation into Supabase
-    console.log('[evaluate] Step 4: Inserting evaluation into Supabase...');
+    // Step 5: Insert evaluation into Supabase
+    console.log('[evaluate] Step 5: Inserting evaluation into Supabase...');
     console.log('[evaluate] Evaluation data:', {
       submission_id,
       rubric_scores_count: evaluation.rubric_scores_json?.length,
