@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUploadThing } from '@/lib/uploadthing';
-import type { Challenge } from '@/lib/types';
+import type { Challenge, Question, Answer } from '@/lib/types';
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -25,7 +25,7 @@ export default function ApplyPage() {
 
   const [fullName, setFullName] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
-  const [writtenExplanation, setWrittenExplanation] = useState('');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoFileName, setVideoFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,10 +33,6 @@ export default function ApplyPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const { startUpload } = useUploadThing('videoUploader');
-
-  const wordCount = countWords(writtenExplanation);
-  const maxWords = 500;
-  const isOverLimit = wordCount > maxWords;
 
   const fetchChallenge = useCallback(async () => {
     try {
@@ -46,6 +42,12 @@ export default function ApplyPage() {
       const found = challenges.find((c: Challenge) => c.id === challengeId);
       if (found) {
         setChallenge(found);
+        // Initialize answers state
+        const initialAnswers: Record<string, string> = {};
+        (found.questions_json || []).forEach((q: Question) => {
+          initialAnswers[q.id] = '';
+        });
+        setAnswers(initialAnswers);
       } else {
         setNotFound(true);
       }
@@ -74,11 +76,20 @@ export default function ApplyPage() {
     }
   };
 
+  const questions = (challenge?.questions_json || []) as Question[];
+
+  const getWordCount = (questionId: string) => countWords(answers[questionId] || '');
+  const getWordLimit = (question: Question) => question.word_limit || 500;
+  const isOverLimit = (question: Question) =>
+    getWordCount(question.id) > getWordLimit(question);
+
+  const anyOverLimit = questions.some((q) => isOverLimit(q));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isOverLimit) {
-      setError(`Written explanation exceeds ${maxWords} words. Please shorten it.`);
+    if (anyOverLimit) {
+      setError('One or more answers exceed the word limit. Please shorten them.');
       return;
     }
 
@@ -97,6 +108,11 @@ export default function ApplyPage() {
         setIsUploading(false);
       }
 
+      const answersJson: Answer[] = questions.map((q) => ({
+        question_id: q.id,
+        text: answers[q.id] || '',
+      }));
+
       const response = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,7 +120,7 @@ export default function ApplyPage() {
           challenge_id: challengeId,
           candidate_name: fullName,
           demo_url: demoUrl,
-          written_explanation: writtenExplanation,
+          answers_json: answersJson,
           video_path: videoPath,
         }),
       });
@@ -113,13 +129,14 @@ export default function ApplyPage() {
 
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+      setError(
+        err instanceof Error ? err.message : 'Submission failed. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center">
@@ -128,7 +145,6 @@ export default function ApplyPage() {
     );
   }
 
-  // Not found state
   if (notFound) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center px-4">
@@ -138,16 +154,17 @@ export default function ApplyPage() {
           className="text-center max-w-md"
         >
           <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Challenge Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Challenge Not Found
+          </h1>
           <p className="text-gray-600">
-            This challenge link is invalid or has expired. Please check with the employer for the correct link.
+            This challenge link is invalid or has expired.
           </p>
         </motion.div>
       </main>
     );
   }
 
-  // Error state
   if (error && !challenge) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center px-4">
@@ -157,7 +174,9 @@ export default function ApplyPage() {
           className="text-center max-w-md"
         >
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Something went wrong
+          </h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </motion.div>
@@ -174,7 +193,6 @@ export default function ApplyPage() {
               key="success"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="text-center py-20"
             >
               <motion.div
@@ -183,44 +201,48 @@ export default function ApplyPage() {
                 transition={{ delay: 0.1, type: 'spring', stiffness: 400 }}
                 className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
               >
-                <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-10 h-10 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </motion.div>
               <h1 className="text-3xl font-bold text-gray-900 mb-3">
                 Your submission is in.
               </h1>
-              <p className="text-lg text-gray-600">
-                We&apos;ll be in touch.
-              </p>
+              <p className="text-lg text-gray-600">We&apos;ll be in touch.</p>
             </motion.div>
           ) : (
             <motion.div
               key="form"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              {/* Challenge Header */}
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
                   {challenge?.role_description}
                 </h1>
               </div>
 
-              {/* Challenge Text */}
-              <Card className="border-0 shadow-none bg-gray-50">
-                <CardContent className="p-6">
-                  <div className="prose prose-gray max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {challenge?.challenge_text}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {challenge?.intro_text && (
+                <Card className="border-0 shadow-none bg-gray-50">
+                  <CardContent className="p-6">
+                    <p className="text-gray-700 leading-relaxed">
+                      {challenge.intro_text}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Submission Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -235,12 +257,46 @@ export default function ApplyPage() {
                   />
                 </div>
 
+                {questions.map((question, index) => (
+                  <div key={question.id}>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      {question.text} <span className="text-red-500">*</span>
+                    </label>
+                    <Textarea
+                      value={answers[question.id] || ''}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [question.id]: e.target.value,
+                        }))
+                      }
+                      placeholder={`Question ${index + 1}`}
+                      rows={6}
+                      required
+                      className={
+                        isOverLimit(question)
+                          ? 'border-red-500 focus-visible:ring-red-500'
+                          : ''
+                      }
+                    />
+                    <div
+                      className={`text-sm mt-2 flex justify-end ${
+                        isOverLimit(question)
+                          ? 'text-red-500 font-medium'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      {getWordCount(question.id)} / {getWordLimit(question)} words
+                    </div>
+                  </div>
+                ))}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Link to your working demo <span className="text-red-500">*</span>
+                    Link to your submission <span className="text-red-500">*</span>
                   </label>
                   <p className="text-sm text-gray-500 mb-2">
-                    GitHub, live URL, Loom, etc.
+                    Link to your working demo, portfolio, or project
                   </p>
                   <Input
                     type="url"
@@ -254,45 +310,23 @@ export default function ApplyPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Written Explanation <span className="text-red-500">*</span>
-                  </label>
-                  <p className="text-sm text-gray-500 mb-3">
-                    Answer these questions: What can the human now do that they couldn&apos;t before?
-                    What is AI responsible for? Where does AI stop? What would break first at scale?
-                  </p>
-                  <Textarea
-                    value={writtenExplanation}
-                    onChange={(e) => setWrittenExplanation(e.target.value)}
-                    placeholder="Explain your approach and design decisions..."
-                    rows={8}
-                    required
-                    className={isOverLimit ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  <div className={`text-sm mt-2 flex justify-end ${isOverLimit ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
-                    {wordCount} / {maxWords} words
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Video Walkthrough <span className="text-gray-400">(optional)</span>
+                    Video Walkthrough{' '}
+                    <span className="text-gray-400">(optional)</span>
                   </label>
                   <p className="text-sm text-gray-500 mb-2">
                     MP4, WebM, or MOV. Max 512MB.
                   </p>
-                  <div className="relative">
-                    <Input
-                      type="file"
-                      accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"
-                      onChange={handleVideoChange}
-                      className="h-12"
-                    />
-                    {videoFileName && (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {videoFileName}
-                      </p>
-                    )}
-                  </div>
+                  <Input
+                    type="file"
+                    accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"
+                    onChange={handleVideoChange}
+                    className="h-12"
+                  />
+                  {videoFileName && (
+                    <p className="text-sm text-green-600 mt-2">
+                      Selected: {videoFileName}
+                    </p>
+                  )}
                 </div>
 
                 {error && (
@@ -308,7 +342,7 @@ export default function ApplyPage() {
                 <Button
                   type="submit"
                   className="w-full h-12 text-base"
-                  disabled={isSubmitting || isOverLimit}
+                  disabled={isSubmitting || anyOverLimit}
                 >
                   {isUploading
                     ? 'Uploading video...'
