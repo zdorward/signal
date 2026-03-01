@@ -45,17 +45,35 @@ export default function CreateChallengePage() {
         if (done) break;
         const chunk = decoder.decode(value);
         fullText += chunk;
-        setStreamedContent(fullText);
+
+        // Only show the challenge text part during streaming (before ---RUBRIC---)
+        const delimiterIndex = fullText.indexOf('---RUBRIC---');
+        if (delimiterIndex !== -1) {
+          setStreamedContent(fullText.substring(0, delimiterIndex).trim());
+        } else {
+          setStreamedContent(fullText);
+        }
       }
 
-      // Strip markdown code blocks if present, then parse JSON
-      let jsonText = fullText.trim();
-      if (jsonText.startsWith('```')) {
-        jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      // Split on delimiter and parse
+      const delimiter = '---RUBRIC---';
+      const delimiterIndex = fullText.indexOf(delimiter);
+
+      if (delimiterIndex === -1) {
+        throw new Error('Invalid response format - missing rubric delimiter');
       }
-      const parsed = JSON.parse(jsonText);
-      setChallengeText(parsed.challenge_text);
-      setRubric(parsed.rubric_json);
+
+      const challengePart = fullText.substring(0, delimiterIndex).trim();
+      let rubricPart = fullText.substring(delimiterIndex + delimiter.length).trim();
+
+      // Strip markdown code blocks if present around rubric JSON
+      if (rubricPart.startsWith('```')) {
+        rubricPart = rubricPart.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      }
+
+      const parsedRubric = JSON.parse(rubricPart);
+      setChallengeText(challengePart);
+      setRubric(parsedRubric);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {

@@ -21,20 +21,33 @@ CRITICAL REQUIREMENTS:
 - Present a concrete, realistic scenario with real constraints (e.g., specific data format, API to integrate, edge cases to handle)
 - The scenario should feel like actual work the candidate would do in the role
 
-Generate:
-1. challenge_text: A specific work-sample scenario that requires building something functional. Include:
-   - A realistic business context/scenario
-   - Clear technical requirements
-   - Specific constraints or edge cases to handle
-   - What the working demo should demonstrate
-   - The ~2 hour time expectation
+OUTPUT FORMAT:
+First, write the challenge as plain prose with markdown formatting. Include:
+- A realistic business context/scenario with a headline
+- Clear technical requirements
+- Specific constraints or edge cases to handle
+- What the working demo should demonstrate
+- The ~2 hour time expectation
 
-2. rubric_json: Exactly 5 weighted criteria for evaluation. Weights must sum to exactly 100.
+Then, on a new line, output exactly: ---RUBRIC---
 
-IMPORTANT: Respond with RAW JSON only. Do NOT wrap in markdown code blocks. Do NOT include \`\`\`json or \`\`\`. Just output the raw JSON object starting with { and ending with }.
+Then output a JSON array with exactly 5 evaluation criteria. Weights must sum to 100.
 
-Example format:
-{"challenge_text": "## The Scenario\\n\\n[content]", "rubric_json": [{"criterion": "Name", "weight": 20, "description": "Description"}]}`;
+Example output structure:
+
+## Build a Transaction Categorization Engine
+
+You're joining our fintech team... [challenge prose continues]
+
+### Requirements
+- Build X
+- Handle Y
+
+### Deliverable
+Submit a working demo link. Time expectation: ~2 hours.
+
+---RUBRIC---
+[{"criterion": "Functionality", "weight": 30, "description": "Does it work?"}, {"criterion": "Code Quality", "weight": 20, "description": "Clean code"}, {"criterion": "Technical Decisions", "weight": 20, "description": "Good choices"}, {"criterion": "Edge Cases", "weight": 15, "description": "Handles edge cases"}, {"criterion": "Polish", "weight": 15, "description": "Attention to detail"}]`;
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',
