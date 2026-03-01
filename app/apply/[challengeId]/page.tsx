@@ -6,9 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useUploadThing } from '@/lib/uploadthing';
 import type { Challenge } from '@/lib/types';
+
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
 
 export default function ApplyPage() {
   const params = useParams();
@@ -16,30 +20,37 @@ export default function ApplyPage() {
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState('');
 
-  const [candidateName, setCandidateName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
   const [writtenExplanation, setWrittenExplanation] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoFileName, setVideoFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const { startUpload } = useUploadThing('videoUploader');
 
+  const wordCount = countWords(writtenExplanation);
+  const maxWords = 500;
+  const isOverLimit = wordCount > maxWords;
+
   const fetchChallenge = useCallback(async () => {
     try {
       const response = await fetch('/api/challenges');
+      if (!response.ok) throw new Error('Failed to fetch');
       const challenges = await response.json();
       const found = challenges.find((c: Challenge) => c.id === challengeId);
       if (found) {
         setChallenge(found);
       } else {
-        setError('Challenge not found');
+        setNotFound(true);
       }
     } catch {
-      setError('Failed to load challenge');
+      setError('Failed to load challenge. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -49,8 +60,28 @@ export default function ApplyPage() {
     fetchChallenge();
   }, [fetchChallenge]);
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+      if (!validTypes.includes(file.type)) {
+        setError('Please upload an MP4, WebM, or MOV file.');
+        return;
+      }
+      setVideoFile(file);
+      setVideoFileName(file.name);
+      setError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isOverLimit) {
+      setError(`Written explanation exceeds ${maxWords} words. Please shorten it.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
@@ -71,7 +102,7 @@ export default function ApplyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challenge_id: challengeId,
-          candidate_name: candidateName,
+          candidate_name: fullName,
           demo_url: demoUrl,
           written_explanation: writtenExplanation,
           video_path: videoPath,
@@ -82,48 +113,85 @@ export default function ApplyPage() {
 
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed');
+      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading challenge...
-      </div>
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-500">Loading challenge...</div>
+      </main>
     );
   }
 
+  // Not found state
+  if (notFound) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Challenge Not Found</h1>
+          <p className="text-gray-600">
+            This challenge link is invalid or has expired. Please check with the employer for the correct link.
+          </p>
+        </motion.div>
+      </main>
+    );
+  }
+
+  // Error state
   if (error && !challenge) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="py-8 text-center text-red-600">{error}</CardContent>
-        </Card>
-      </div>
+      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </motion.div>
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-4 py-12">
         <AnimatePresence mode="wait">
           {submitted ? (
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center space-y-4"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="text-center py-20"
             >
-              <div className="text-6xl">✓</div>
-              <h1 className="text-2xl font-bold text-green-600">
-                Submission Received!
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 400 }}
+                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+              >
+                <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                Your submission is in.
               </h1>
-              <p className="text-gray-600">
-                Thank you for your submission. The hiring team will review your work
-                and get back to you.
+              <p className="text-lg text-gray-600">
+                We&apos;ll be in touch.
               </p>
             </motion.div>
           ) : (
@@ -131,102 +199,124 @@ export default function ApplyPage() {
               key="form"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-6"
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>{challenge?.role_description}</CardTitle>
-                  <CardDescription>Read the challenge carefully before submitting.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="whitespace-pre-wrap">{challenge?.challenge_text}</p>
+              {/* Challenge Header */}
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  {challenge?.role_description}
+                </h1>
+              </div>
+
+              {/* Challenge Text */}
+              <Card className="border-0 shadow-none bg-gray-50">
+                <CardContent className="p-6">
+                  <div className="prose prose-gray max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                      {challenge?.challenge_text}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Submission</CardTitle>
-                  <CardDescription>
-                    Fill out all required fields. Video is optional but recommended.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Your Name *
-                      </label>
-                      <Input
-                        value={candidateName}
-                        onChange={(e) => setCandidateName(e.target.value)}
-                        placeholder="Jane Doe"
-                        required
-                      />
-                    </div>
+              {/* Submission Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    required
+                    className="h-12"
+                  />
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Demo URL *
-                      </label>
-                      <Input
-                        type="url"
-                        value={demoUrl}
-                        onChange={(e) => setDemoUrl(e.target.value)}
-                        placeholder="https://your-demo.vercel.app"
-                        required
-                      />
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Link to your working demo <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-sm text-gray-500 mb-2">
+                    GitHub, live URL, Loom, etc.
+                  </p>
+                  <Input
+                    type="url"
+                    value={demoUrl}
+                    onChange={(e) => setDemoUrl(e.target.value)}
+                    placeholder="https://"
+                    required
+                    className="h-12"
+                  />
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Written Explanation *
-                      </label>
-                      <Textarea
-                        value={writtenExplanation}
-                        onChange={(e) => setWrittenExplanation(e.target.value)}
-                        placeholder="Explain your approach, design decisions, and any trade-offs you made..."
-                        rows={6}
-                        required
-                      />
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Written Explanation <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Answer these questions: What can the human now do that they couldn&apos;t before?
+                    What is AI responsible for? Where does AI stop? What would break first at scale?
+                  </p>
+                  <Textarea
+                    value={writtenExplanation}
+                    onChange={(e) => setWrittenExplanation(e.target.value)}
+                    placeholder="Explain your approach and design decisions..."
+                    rows={8}
+                    required
+                    className={isOverLimit ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  />
+                  <div className={`text-sm mt-2 flex justify-end ${isOverLimit ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                    {wordCount} / {maxWords} words
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Video Walkthrough (optional)
-                      </label>
-                      <Input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Max 512MB. Show us your demo in action!
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Video Walkthrough <span className="text-gray-400">(optional)</span>
+                  </label>
+                  <p className="text-sm text-gray-500 mb-2">
+                    MP4, WebM, or MOV. Max 512MB.
+                  </p>
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"
+                      onChange={handleVideoChange}
+                      className="h-12"
+                    />
+                    {videoFileName && (
+                      <p className="text-sm text-green-600 mt-2">
+                        Selected: {videoFileName}
                       </p>
-                    </div>
-
-                    {error && (
-                      <div className="bg-red-50 text-red-700 p-3 rounded text-sm">
-                        {error}
-                      </div>
                     )}
+                  </div>
+                </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isUploading
-                        ? 'Uploading video...'
-                        : isSubmitting
-                        ? 'Submitting...'
-                        : 'Submit Application'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 text-red-700 p-4 rounded-lg text-sm"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base"
+                  disabled={isSubmitting || isOverLimit}
+                >
+                  {isUploading
+                    ? 'Uploading video...'
+                    : isSubmitting
+                    ? 'Submitting...'
+                    : 'Submit'}
+                </Button>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>
