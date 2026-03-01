@@ -31,17 +31,10 @@ Generate:
 
 2. rubric_json: Exactly 5 weighted criteria for evaluation. Weights must sum to exactly 100.
 
-Respond with valid JSON in this exact format:
-{
-  "challenge_text": "## The Scenario\\n\\n[Realistic business context]\\n\\n## Requirements\\n\\n[What to build]\\n\\n## Constraints\\n\\n[Specific limitations/edge cases]\\n\\n## Deliverable\\n\\nSubmit a working demo link. Time expectation: ~2 hours.",
-  "rubric_json": [
-    {"criterion": "Functionality", "weight": 30, "description": "Does the demo work and meet the core requirements?"},
-    {"criterion": "Code Quality", "weight": 20, "description": "Clean, readable, well-organized code"},
-    {"criterion": "Technical Decisions", "weight": 20, "description": "Appropriate architecture and technology choices"},
-    {"criterion": "Edge Case Handling", "weight": 15, "description": "Handles the specified constraints and edge cases"},
-    {"criterion": "Polish", "weight": 15, "description": "Attention to detail, UX considerations, error handling"}
-  ]
-}`;
+IMPORTANT: Respond with RAW JSON only. Do NOT wrap in markdown code blocks. Do NOT include \`\`\`json or \`\`\`. Just output the raw JSON object starting with { and ending with }.
+
+Example format:
+{"challenge_text": "## The Scenario\\n\\n[content]", "rubric_json": [{"criterion": "Name", "weight": 20, "description": "Description"}]}`;
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',

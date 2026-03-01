@@ -48,8 +48,12 @@ export default function CreateChallengePage() {
         setStreamedContent(fullText);
       }
 
-      // Parse the final JSON
-      const parsed = JSON.parse(fullText);
+      // Strip markdown code blocks if present, then parse JSON
+      let jsonText = fullText.trim();
+      if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      }
+      const parsed = JSON.parse(jsonText);
       setChallengeText(parsed.challenge_text);
       setRubric(parsed.rubric_json);
     } catch (err) {
