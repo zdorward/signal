@@ -3,7 +3,7 @@ import { anthropic } from '@/lib/anthropic';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  const { role_description } = await request.json();
+  const { role_description, challenge_requirements } = await request.json();
 
   if (!role_description) {
     return new Response(JSON.stringify({ error: 'Missing role_description' }), {
@@ -12,53 +12,69 @@ export async function POST(request: Request) {
     });
   }
 
-  const systemPrompt = `You are an expert at creating technical hiring challenges that require candidates to build working demos.
+  const systemPrompt = `You are an expert at creating hiring assessments that evaluate candidates through targeted questions.
 
-CRITICAL REQUIREMENTS:
-- The challenge MUST require a working demo link submission — NOT a written essay or explanation
-- The challenge must be specific to the role described
-- Time-boxed to approximately 2 hours of work
-- Present a concrete, realistic scenario with real constraints (e.g., specific data format, API to integrate, edge cases to handle)
-- The scenario should feel like actual work the candidate would do in the role
+TASK: Generate a set of custom questions for evaluating candidates, along with evaluation criteria for each question.
 
 OUTPUT FORMAT:
-First, write the challenge as plain prose with markdown formatting. Include:
-- A realistic business context/scenario with a headline
-- Clear technical requirements
-- Specific constraints or edge cases to handle
-- What the working demo should demonstrate
-- The ~2 hour time expectation
+First, write a brief intro (2-3 sentences) that sets context for the candidate about what they'll be asked.
 
-Then, on a new line, output exactly: ---RUBRIC---
+Then output: ---QUESTIONS---
 
-Then output a JSON array with exactly 5 evaluation criteria. Weights must sum to 100.
+Then output a JSON array of questions. Each question has:
+- id: a unique UUID
+- text: the question to ask the candidate
+- order: position (1, 2, 3...)
+- word_limit: suggested word limit (default 500)
+- criteria: array of 1-3 evaluation criteria, each with:
+  - id: unique UUID
+  - text: what to evaluate in the answer
+  - order: position (1, 2, 3)
 
-Example output structure:
+Generate 3-5 questions total. Questions should:
+- Be specific to the role and requirements
+- Include at least one question about motivation/fit (e.g., "Why [company]?")
+- Include at least one question about technical decision-making
+- Be answerable in the word limit
 
-## Build a Transaction Categorization Engine
+Example output:
 
-You're joining our fintech team... [challenge prose continues]
+We're looking for someone who can think critically about AI systems and make thoughtful tradeoffs. Please answer each question below.
 
-### Requirements
-- Build X
-- Handle Y
+---QUESTIONS---
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "text": "Why do you want to work at Wealthsimple?",
+    "order": 1,
+    "word_limit": 300,
+    "criteria": [
+      {"id": "550e8400-e29b-41d4-a716-446655440001", "text": "Demonstrates specific knowledge of Wealthsimple's mission, products, or culture", "order": 1},
+      {"id": "550e8400-e29b-41d4-a716-446655440002", "text": "Shows genuine connection between candidate's values and company", "order": 2}
+    ]
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "text": "What is the one critical decision in your system that must remain human?",
+    "order": 2,
+    "word_limit": 500,
+    "criteria": [
+      {"id": "550e8400-e29b-41d4-a716-446655440004", "text": "Identifies a genuinely critical decision point", "order": 1},
+      {"id": "550e8400-e29b-41d4-a716-446655440005", "text": "Articulates clear reasoning for why human judgment is essential", "order": 2},
+      {"id": "550e8400-e29b-41d4-a716-446655440006", "text": "Demonstrates understanding of AI limitations", "order": 3}
+    ]
+  }
+]`;
 
-### Deliverable
-Submit a working demo link. Time expectation: ~2 hours.
-
----RUBRIC---
-[{"criterion": "Functionality", "weight": 30, "description": "Does it work?"}, {"criterion": "Code Quality", "weight": 20, "description": "Clean code"}, {"criterion": "Technical Decisions", "weight": 20, "description": "Good choices"}, {"criterion": "Edge Cases", "weight": 15, "description": "Handles edge cases"}, {"criterion": "Polish", "weight": 15, "description": "Attention to detail"}]`;
+  const userMessage = challenge_requirements
+    ? `Create questions for this role:\n\n${role_description}\n\nAdditional requirements:\n${challenge_requirements}`
+    : `Create questions for this role:\n\n${role_description}`;
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2000,
     system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: `Create a hiring challenge for this role:\n\n${role_description}`,
-      },
-    ],
+    messages: [{ role: 'user', content: userMessage }],
   });
 
   const encoder = new TextEncoder();
