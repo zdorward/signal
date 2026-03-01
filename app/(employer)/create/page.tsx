@@ -18,6 +18,7 @@ export default function CreateChallengePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [introText, setIntroText] = useState('');
+  const [challengeText, setChallengeText] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -27,6 +28,7 @@ export default function CreateChallengePage() {
     setIsGenerating(true);
     setStreamedContent('');
     setIntroText('');
+    setChallengeText('');
     setQuestions([]);
     setSavedChallengeId(null);
     setError('');
@@ -55,23 +57,32 @@ export default function CreateChallengePage() {
         const chunk = decoder.decode(value);
         fullText += chunk;
 
-        const delimiterIndex = fullText.indexOf('---QUESTIONS---');
-        if (delimiterIndex !== -1) {
-          setStreamedContent(fullText.substring(0, delimiterIndex).trim());
+        // Show content up to first delimiter during streaming
+        const challengeDelim = fullText.indexOf('---CHALLENGE---');
+        const questionsDelim = fullText.indexOf('---QUESTIONS---');
+        if (questionsDelim !== -1) {
+          setStreamedContent(fullText.substring(0, questionsDelim).trim());
+        } else if (challengeDelim !== -1) {
+          setStreamedContent(fullText.substring(0, challengeDelim).trim());
         } else {
           setStreamedContent(fullText);
         }
       }
 
-      const delimiter = '---QUESTIONS---';
-      const delimiterIndex = fullText.indexOf(delimiter);
+      // Parse: intro ---CHALLENGE--- challenge_text ---QUESTIONS--- questions_json
+      const challengeDelimiter = '---CHALLENGE---';
+      const questionsDelimiter = '---QUESTIONS---';
 
-      if (delimiterIndex === -1) {
-        throw new Error('Invalid response format - missing questions delimiter');
+      const challengeIndex = fullText.indexOf(challengeDelimiter);
+      const questionsIndex = fullText.indexOf(questionsDelimiter);
+
+      if (challengeIndex === -1 || questionsIndex === -1) {
+        throw new Error('Invalid response format - missing delimiters');
       }
 
-      const introPart = fullText.substring(0, delimiterIndex).trim();
-      let questionsPart = fullText.substring(delimiterIndex + delimiter.length).trim();
+      const introPart = fullText.substring(0, challengeIndex).trim();
+      const challengePart = fullText.substring(challengeIndex + challengeDelimiter.length, questionsIndex).trim();
+      let questionsPart = fullText.substring(questionsIndex + questionsDelimiter.length).trim();
 
       if (questionsPart.startsWith('```')) {
         questionsPart = questionsPart.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
@@ -79,6 +90,7 @@ export default function CreateChallengePage() {
 
       const parsedQuestions = JSON.parse(questionsPart);
       setIntroText(introPart);
+      setChallengeText(challengePart);
       setQuestions(parsedQuestions);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
@@ -99,6 +111,7 @@ export default function CreateChallengePage() {
           role_description: roleDescription,
           challenge_requirements: challengeRequirements || null,
           intro_text: introText,
+          challenge_text: challengeText,
           questions_json: questions,
         }),
       });
@@ -190,7 +203,7 @@ export default function CreateChallengePage() {
     }
   };
 
-  const hasGenerated = introText && questions.length > 0;
+  const hasGenerated = introText && challengeText && questions.length > 0;
 
   if (savedChallengeId && shareableLink) {
     return (
@@ -223,6 +236,7 @@ export default function CreateChallengePage() {
               onClick={() => {
                 setSavedChallengeId(null);
                 setIntroText('');
+                setChallengeText('');
                 setQuestions([]);
                 setRoleDescription('');
                 setChallengeRequirements('');
@@ -325,23 +339,40 @@ export default function CreateChallengePage() {
               <CardHeader>
                 <CardTitle>Introduction</CardTitle>
                 <CardDescription>
-                  This text appears at the top of the application form.
+                  Brief intro that appears at the top of the application.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Textarea
                   value={introText}
                   onChange={(e) => setIntroText(e.target.value)}
-                  rows={3}
+                  rows={2}
                 />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Questions & Evaluation Criteria</CardTitle>
+                <CardTitle>Challenge</CardTitle>
                 <CardDescription>
-                  Edit questions and their scoring criteria. Each criterion is scored 1-5.
+                  The project candidates must build. Supports markdown.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={challengeText}
+                  onChange={(e) => setChallengeText(e.target.value)}
+                  rows={12}
+                  className="font-mono text-sm"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Supplementary Questions</CardTitle>
+                <CardDescription>
+                  Additional questions alongside the challenge. Each criterion is scored 1-5.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

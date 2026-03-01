@@ -14,12 +14,13 @@ export interface Question {
   criteria: Criterion[];
 }
 
-// Challenge with questions instead of rubric
+// Challenge with project description and supplementary questions
 export interface Challenge {
   id: string;
   role_description: string;
   challenge_requirements: string | null;
   intro_text: string;
+  challenge_text: string;
   questions_json: Question[];
   created_at: string;
 }

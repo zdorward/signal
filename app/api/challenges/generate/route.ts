@@ -12,34 +12,53 @@ export async function POST(request: Request) {
     });
   }
 
-  const systemPrompt = `You are an expert at creating hiring assessments that evaluate candidates through targeted questions.
+  const systemPrompt = `You are an expert at creating work-sample hiring challenges.
 
-TASK: Generate a set of custom questions for evaluating candidates, along with evaluation criteria for each question.
+TASK: Generate a project challenge that candidates must build, plus 2-3 supplementary questions.
 
 OUTPUT FORMAT:
-First, write a brief intro (2-3 sentences) that sets context for the candidate about what they'll be asked.
+1. First, write a brief intro (2-3 sentences) setting context.
 
-Then output: ---QUESTIONS---
+2. Then output: ---CHALLENGE---
 
-Then output a JSON array of questions. Each question has:
-- id: a unique UUID
-- text: the question to ask the candidate
-- order: position (1, 2, 3...)
-- word_limit: suggested word limit (default 500)
-- criteria: array of 1-3 evaluation criteria, each with:
-  - id: unique UUID
-  - text: what to evaluate in the answer
-  - order: position (1, 2, 3)
+3. Then write the project challenge in markdown. This should:
+   - Present a realistic scenario with business context
+   - Specify what to build (a working demo)
+   - Include clear technical requirements
+   - Be completable in ~2 hours
+   - End with "Submit a link to your working demo."
 
-Generate 3-5 questions total. Questions should:
-- Be specific to the role and requirements
-- Include at least one question about motivation/fit (e.g., "Why [company]?")
-- Include at least one question about technical decision-making
-- Be answerable in the word limit
+4. Then output: ---QUESTIONS---
+
+5. Then output a JSON array with 2-3 supplementary questions. Each question has:
+   - id: a unique UUID
+   - text: the question
+   - order: position (1, 2, 3)
+   - word_limit: suggested word limit (300-500)
+   - criteria: array of 1-2 evaluation criteria, each with id, text, order
+
+Questions should focus on:
+- Motivation/fit (e.g., "Why [company]?")
+- Technical decision-making (e.g., "What decision must remain human?")
 
 Example output:
 
-We're looking for someone who can think critically about AI systems and make thoughtful tradeoffs. Please answer each question below.
+We're looking for builders who can ship AI-powered products. Complete the challenge below and answer the questions.
+
+---CHALLENGE---
+
+## Build a Smart Expense Categorizer
+
+You're joining our fintech team. We need a tool that automatically categorizes transaction descriptions.
+
+### Requirements
+- Accept a transaction description as input
+- Return a category (e.g., "Food & Dining", "Transportation", "Entertainment")
+- Use AI to handle ambiguous cases
+- Show your reasoning for edge cases
+
+### Deliverable
+Submit a link to your working demo. Time expectation: ~2 hours.
 
 ---QUESTIONS---
 [
@@ -49,8 +68,8 @@ We're looking for someone who can think critically about AI systems and make tho
     "order": 1,
     "word_limit": 300,
     "criteria": [
-      {"id": "550e8400-e29b-41d4-a716-446655440001", "text": "Demonstrates specific knowledge of Wealthsimple's mission, products, or culture", "order": 1},
-      {"id": "550e8400-e29b-41d4-a716-446655440002", "text": "Shows genuine connection between candidate's values and company", "order": 2}
+      {"id": "550e8400-e29b-41d4-a716-446655440001", "text": "Demonstrates specific knowledge of the company", "order": 1},
+      {"id": "550e8400-e29b-41d4-a716-446655440002", "text": "Shows genuine alignment with company values", "order": 2}
     ]
   },
   {
@@ -60,8 +79,7 @@ We're looking for someone who can think critically about AI systems and make tho
     "word_limit": 500,
     "criteria": [
       {"id": "550e8400-e29b-41d4-a716-446655440004", "text": "Identifies a genuinely critical decision point", "order": 1},
-      {"id": "550e8400-e29b-41d4-a716-446655440005", "text": "Articulates clear reasoning for why human judgment is essential", "order": 2},
-      {"id": "550e8400-e29b-41d4-a716-446655440006", "text": "Demonstrates understanding of AI limitations", "order": 3}
+      {"id": "550e8400-e29b-41d4-a716-446655440005", "text": "Articulates clear reasoning for human judgment", "order": 2}
     ]
   }
 ]`;

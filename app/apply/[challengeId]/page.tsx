@@ -234,11 +234,19 @@ export default function ApplyPage() {
               </div>
 
               {challenge?.intro_text && (
+                <p className="text-gray-600 leading-relaxed">
+                  {challenge.intro_text}
+                </p>
+              )}
+
+              {challenge?.challenge_text && (
                 <Card className="border-0 shadow-none bg-gray-50">
                   <CardContent className="p-6">
-                    <p className="text-gray-700 leading-relaxed">
-                      {challenge.intro_text}
-                    </p>
+                    <div className="prose prose-gray max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                        {challenge.challenge_text}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}

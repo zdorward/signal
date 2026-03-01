@@ -16,11 +16,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { role_description, challenge_requirements, intro_text, questions_json } = body;
+  const { role_description, challenge_requirements, intro_text, challenge_text, questions_json } = body;
 
-  if (!role_description || !intro_text || !questions_json) {
+  if (!role_description || !intro_text || !challenge_text || !questions_json) {
     return NextResponse.json(
-      { error: 'Missing required fields: role_description, intro_text, questions_json' },
+      { error: 'Missing required fields: role_description, intro_text, challenge_text, questions_json' },
       { status: 400 }
     );
   }
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       role_description,
       challenge_requirements: challenge_requirements || null,
       intro_text,
+      challenge_text,
       questions_json,
     })
     .select()
