@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { anthropic } from '@/lib/anthropic';
-import type { Evaluation, Submission, Challenge } from '@/lib/types';
+import type { Evaluation } from '@/lib/types';
 
 export async function POST(request: Request) {
   const { submission_id } = await request.json();
@@ -10,14 +10,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing submission_id' }, { status: 400 });
   }
 
-  // Fetch submission with evaluation and challenge
   const { data: submission, error } = await supabaseAdmin
     .from('submissions')
-    .select(`
-      *,
-      evaluation:evaluations(*),
-      challenge:challenges(*)
-    `)
+    .select('*, evaluation:evaluations(*), challenge:challenges(*)')
     .eq('id', submission_id)
     .single();
 
@@ -28,27 +23,28 @@ export async function POST(request: Request) {
   const evaluation = Array.isArray(submission.evaluation)
     ? submission.evaluation[0]
     : submission.evaluation;
-  const challenge = Array.isArray(submission.challenge)
-    ? submission.challenge[0]
-    : submission.challenge;
 
-  const typedSubmission = submission as unknown as Submission;
-  const typedEvaluation = evaluation as Evaluation | null;
-  const typedChallenge = challenge as Challenge | null;
+  if (!evaluation) {
+    return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 });
+  }
+
+  const typedEvaluation = evaluation as Evaluation;
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 1000,
-    system: `You write polite, constructive rejection emails for job candidates. Be kind but honest. Keep it brief (3-4 paragraphs). Don't be generic - reference specific aspects of their submission.`,
+    max_tokens: 500,
+    system: `You write polite, professional rejection emails. Be brief, kind, and constructive.`,
     messages: [
       {
         role: 'user',
-        content: `Write a rejection email for this candidate:
+        content: `Write a rejection email for ${submission.candidate_name}.
 
-Name: ${typedSubmission.candidate_name}
-Role: ${typedChallenge?.role_description || 'Unknown role'}
-${typedEvaluation ? `Evaluation summary: ${typedEvaluation.summary_bullets.join(', ')}` : ''}
-${typedEvaluation?.flag_reason ? `Main concern: ${typedEvaluation.flag_reason}` : ''}`,
+Summary of their submission:
+${typedEvaluation.summary_bullets.join('\n')}
+
+${typedEvaluation.flag_reason ? `Additional context: ${typedEvaluation.flag_reason}` : ''}
+
+Keep it under 150 words. Be encouraging but honest.`,
       },
     ],
   });
@@ -57,6 +53,12 @@ ${typedEvaluation?.flag_reason ? `Main concern: ${typedEvaluation.flag_reason}` 
   if (content.type !== 'text') {
     return NextResponse.json({ error: 'Unexpected response' }, { status: 500 });
   }
+
+  // Update the evaluation with new rejection draft
+  await supabaseAdmin
+    .from('evaluations')
+    .update({ rejection_draft: content.text })
+    .eq('id', typedEvaluation.id);
 
   return NextResponse.json({ rejection_draft: content.text });
 }
