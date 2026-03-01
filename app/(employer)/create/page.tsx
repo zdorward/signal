@@ -1,55 +1,63 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import type { Question, Criterion } from '@/lib/types';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import type { Question, Criterion } from "@/lib/types";
 
 function generateId(): string {
   return crypto.randomUUID();
 }
 
 export default function CreateChallengePage() {
-  const [roleDescription, setRoleDescription] = useState('');
-  const [challengeRequirements, setChallengeRequirements] = useState('');
+  const [jobTitle, setJobTitle] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+  const [challengeRequirements, setChallengeRequirements] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [streamedContent, setStreamedContent] = useState('');
-  const [introText, setIntroText] = useState('');
-  const [challengeText, setChallengeText] = useState('');
+  const [streamedContent, setStreamedContent] = useState("");
+  const [introText, setIntroText] = useState("");
+  const [challengeText, setChallengeText] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [savedChallengeId, setSavedChallengeId] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    setStreamedContent('');
-    setIntroText('');
-    setChallengeText('');
+    setStreamedContent("");
+    setIntroText("");
+    setChallengeText("");
     setQuestions([]);
     setSavedChallengeId(null);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/challenges/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/challenges/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          role_description: roleDescription,
+          role_description: `${jobTitle}${jobDescription ? `\n\n${jobDescription}` : ""}`,
           challenge_requirements: challengeRequirements || undefined,
         }),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) throw new Error("Generation failed");
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader');
+      if (!reader) throw new Error("No reader");
 
       const decoder = new TextDecoder();
-      let fullText = '';
+      let fullText = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -58,8 +66,8 @@ export default function CreateChallengePage() {
         fullText += chunk;
 
         // Show content up to first delimiter during streaming
-        const challengeDelim = fullText.indexOf('---CHALLENGE---');
-        const questionsDelim = fullText.indexOf('---QUESTIONS---');
+        const challengeDelim = fullText.indexOf("---CHALLENGE---");
+        const questionsDelim = fullText.indexOf("---QUESTIONS---");
         if (questionsDelim !== -1) {
           setStreamedContent(fullText.substring(0, questionsDelim).trim());
         } else if (challengeDelim !== -1) {
@@ -70,22 +78,28 @@ export default function CreateChallengePage() {
       }
 
       // Parse: intro ---CHALLENGE--- challenge_text ---QUESTIONS--- questions_json
-      const challengeDelimiter = '---CHALLENGE---';
-      const questionsDelimiter = '---QUESTIONS---';
+      const challengeDelimiter = "---CHALLENGE---";
+      const questionsDelimiter = "---QUESTIONS---";
 
       const challengeIndex = fullText.indexOf(challengeDelimiter);
       const questionsIndex = fullText.indexOf(questionsDelimiter);
 
       if (challengeIndex === -1 || questionsIndex === -1) {
-        throw new Error('Invalid response format - missing delimiters');
+        throw new Error("Invalid response format - missing delimiters");
       }
 
       const introPart = fullText.substring(0, challengeIndex).trim();
-      const challengePart = fullText.substring(challengeIndex + challengeDelimiter.length, questionsIndex).trim();
-      let questionsPart = fullText.substring(questionsIndex + questionsDelimiter.length).trim();
+      const challengePart = fullText
+        .substring(challengeIndex + challengeDelimiter.length, questionsIndex)
+        .trim();
+      let questionsPart = fullText
+        .substring(questionsIndex + questionsDelimiter.length)
+        .trim();
 
-      if (questionsPart.startsWith('```')) {
-        questionsPart = questionsPart.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      if (questionsPart.startsWith("```")) {
+        questionsPart = questionsPart
+          .replace(/^```(?:json)?\n?/, "")
+          .replace(/\n?```$/, "");
       }
 
       const parsedQuestions = JSON.parse(questionsPart);
@@ -93,7 +107,7 @@ export default function CreateChallengePage() {
       setChallengeText(challengePart);
       setQuestions(parsedQuestions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Generation failed');
+      setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setIsGenerating(false);
     }
@@ -101,27 +115,28 @@ export default function CreateChallengePage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/challenges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/challenges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          role_description: roleDescription,
+          role_description: jobTitle,
           challenge_requirements: challengeRequirements || null,
           intro_text: introText,
           challenge_text: challengeText,
           questions_json: questions,
+          deadline: deadline || null,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) throw new Error("Failed to save");
 
       const data = await response.json();
       setSavedChallengeId(data.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setIsSaving(false);
     }
@@ -129,17 +144,17 @@ export default function CreateChallengePage() {
 
   const updateQuestion = (questionId: string, updates: Partial<Question>) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q))
+      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
     );
   };
 
   const addQuestion = () => {
     const newQuestion: Question = {
       id: generateId(),
-      text: '',
+      text: "",
       order: questions.length + 1,
       word_limit: 500,
-      criteria: [{ id: generateId(), text: '', order: 1 }],
+      criteria: [{ id: generateId(), text: "", order: 1 }],
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -151,7 +166,7 @@ export default function CreateChallengePage() {
   const updateCriterion = (
     questionId: string,
     criterionId: string,
-    updates: Partial<Criterion>
+    updates: Partial<Criterion>,
   ) => {
     setQuestions((prev) =>
       prev.map((q) =>
@@ -159,11 +174,11 @@ export default function CreateChallengePage() {
           ? {
               ...q,
               criteria: q.criteria.map((c) =>
-                c.id === criterionId ? { ...c, ...updates } : c
+                c.id === criterionId ? { ...c, ...updates } : c,
               ),
             }
-          : q
-      )
+          : q,
+      ),
     );
   };
 
@@ -175,11 +190,11 @@ export default function CreateChallengePage() {
               ...q,
               criteria: [
                 ...q.criteria,
-                { id: generateId(), text: '', order: q.criteria.length + 1 },
+                { id: generateId(), text: "", order: q.criteria.length + 1 },
               ],
             }
-          : q
-      )
+          : q,
+      ),
     );
   };
 
@@ -188,13 +203,13 @@ export default function CreateChallengePage() {
       prev.map((q) =>
         q.id === questionId
           ? { ...q, criteria: q.criteria.filter((c) => c.id !== criterionId) }
-          : q
-      )
+          : q,
+      ),
     );
   };
 
   const shareableLink = savedChallengeId
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/apply/${savedChallengeId}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/apply/${savedChallengeId}`
     : null;
 
   const copyLink = () => {
@@ -214,8 +229,12 @@ export default function CreateChallengePage() {
           className="text-center space-y-6"
         >
           <div className="text-6xl">✓</div>
-          <h1 className="text-3xl font-bold text-green-600">Challenge Created!</h1>
-          <p className="text-gray-600 text-lg">Share this link with candidates:</p>
+          <h1 className="text-3xl font-bold text-green-600">
+            Job Posted!
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Share this link with candidates:
+          </p>
 
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6">
@@ -235,17 +254,19 @@ export default function CreateChallengePage() {
               variant="outline"
               onClick={() => {
                 setSavedChallengeId(null);
-                setIntroText('');
-                setChallengeText('');
+                setIntroText("");
+                setChallengeText("");
                 setQuestions([]);
-                setRoleDescription('');
-                setChallengeRequirements('');
-                setStreamedContent('');
+                setJobTitle("");
+                setJobDescription("");
+                setChallengeRequirements("");
+                setDeadline("");
+                setStreamedContent("");
               }}
             >
               Create Another
             </Button>
-            <Button onClick={() => (window.location.href = '/dashboard')}>
+            <Button onClick={() => (window.location.href = "/dashboard")}>
               View Dashboard
             </Button>
           </div>
@@ -257,45 +278,66 @@ export default function CreateChallengePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Create Challenge</h1>
+        <h1 className="text-2xl font-bold">Create Job</h1>
         <p className="text-gray-600">
           Describe the role and let AI generate evaluation questions.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Role Description</CardTitle>
-          <CardDescription>
-            Describe the role, required skills, and what you&apos;re looking for.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Textarea
-            value={roleDescription}
-            onChange={(e) => setRoleDescription(e.target.value)}
-            placeholder="e.g., AI Builder role at Wealthsimple. Should be able to integrate LLMs into production applications..."
-            rows={4}
-            disabled={isGenerating}
-          />
+        <CardContent className="pt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Job Title</label>
+            <Input
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="AI Builder"
+              disabled={isGenerating}
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium mb-2">
-              Challenge Requirements (optional)
+              Role Description
+            </label>
+            <Textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="As an AI Builder, you'll own the full path from problem to shipped system to real-world adoption. That means..."
+              rows={4}
+              disabled={isGenerating}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Project Requirements{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <Textarea
               value={challengeRequirements}
               onChange={(e) => setChallengeRequirements(e.target.value)}
-              placeholder="e.g., Should include a demo link and video walkthrough. Focus on AI product thinking."
+              placeholder="Create an AI-enabled financial planning recommendation system..."
               rows={2}
+              disabled={isGenerating}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Application Deadline{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <Input
+              type="datetime-local"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
               disabled={isGenerating}
             />
           </div>
           <Button
             onClick={handleGenerate}
-            disabled={!roleDescription.trim() || isGenerating}
+            disabled={!jobTitle.trim() || isGenerating}
             size="lg"
           >
-            {isGenerating ? 'Generating...' : 'Generate Questions'}
+            {isGenerating ? "Generating..." : "Generate Application"}
           </Button>
         </CardContent>
       </Card>
@@ -321,7 +363,7 @@ export default function CreateChallengePage() {
               </CardHeader>
               <CardContent>
                 <pre className="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-4 rounded overflow-auto max-h-96">
-                  {streamedContent || 'Starting generation...'}
+                  {streamedContent || "Starting generation..."}
                 </pre>
               </CardContent>
             </Card>
@@ -353,7 +395,7 @@ export default function CreateChallengePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Challenge</CardTitle>
+                <CardTitle>Project</CardTitle>
                 <CardDescription>
                   The project candidates must build. Supports markdown.
                 </CardDescription>
@@ -372,7 +414,8 @@ export default function CreateChallengePage() {
               <CardHeader>
                 <CardTitle>Supplementary Questions</CardTitle>
                 <CardDescription>
-                  Additional questions alongside the challenge. Each criterion is scored 1-5.
+                  Additional questions alongside the challenge. Each criterion
+                  is scored 1-5.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -392,7 +435,9 @@ export default function CreateChallengePage() {
                         <Textarea
                           value={question.text}
                           onChange={(e) =>
-                            updateQuestion(question.id, { text: e.target.value })
+                            updateQuestion(question.id, {
+                              text: e.target.value,
+                            })
                           }
                           placeholder="Question text"
                           rows={2}
@@ -428,7 +473,10 @@ export default function CreateChallengePage() {
                         Evaluation Criteria:
                       </p>
                       {question.criteria.map((criterion, cIndex) => (
-                        <div key={criterion.id} className="flex items-center gap-2">
+                        <div
+                          key={criterion.id}
+                          className="flex items-center gap-2"
+                        >
                           <span className="text-sm text-gray-400 w-6">
                             {cIndex + 1}.
                           </span>
@@ -446,7 +494,9 @@ export default function CreateChallengePage() {
                             variant="ghost"
                             size="sm"
                             className="text-red-500"
-                            onClick={() => removeCriterion(question.id, criterion.id)}
+                            onClick={() =>
+                              removeCriterion(question.id, criterion.id)
+                            }
                             disabled={question.criteria.length <= 1}
                           >
                             ×
@@ -472,7 +522,7 @@ export default function CreateChallengePage() {
 
             <div className="flex gap-4">
               <Button onClick={handleSave} disabled={isSaving} size="lg">
-                {isSaving ? 'Saving...' : 'Save Challenge'}
+                {isSaving ? "Publishing..." : "Publish Job"}
               </Button>
               <Button
                 variant="outline"

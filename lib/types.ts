@@ -22,6 +22,7 @@ export interface Challenge {
   intro_text: string;
   challenge_text: string;
   questions_json: Question[];
+  deadline: string | null;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ export interface Submission {
   id: string;
   challenge_id: string;
   candidate_name: string;
+  candidate_email: string | null;
   demo_url: string;
   answers_json: Answer[];
   video_path: string | null;
@@ -67,4 +69,13 @@ export interface Evaluation {
 export interface SubmissionWithEvaluation extends Submission {
   evaluation: Evaluation | null;
   challenge: Challenge | null;
+}
+
+// Company settings
+export interface CompanySettings {
+  id: string;
+  company_name: string;
+  mission: string | null;
+  benefits: string | null;
+  updated_at: string;
 }

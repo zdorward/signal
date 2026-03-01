@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { challenge_id, candidate_name, demo_url, answers_json, video_path } = body;
+  const { challenge_id, candidate_name, candidate_email, demo_url, answers_json, video_path } = body;
 
   if (!challenge_id || !candidate_name || !demo_url || !answers_json) {
     return NextResponse.json(
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     .insert({
       challenge_id,
       candidate_name,
+      candidate_email: candidate_email || null,
       demo_url,
       answers_json,
       video_path: video_path || null,
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    console.error('Submission insert error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

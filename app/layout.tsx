@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Signal - AI-Powered Hiring Challenges',
-  description: 'Create challenges, evaluate candidates, hire smarter.',
+  title: 'Signal - AI-Powered Hiring',
+  description: 'Create job applications, evaluate candidates, hire smarter.',
 };
 
 export default function RootLayout({

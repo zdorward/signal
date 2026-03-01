@@ -1,6 +1,11 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export default function Home() {
   return (
@@ -9,7 +14,7 @@ export default function Home() {
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight">Signal</h1>
           <p className="mt-2 text-lg text-gray-600">
-            AI-powered hiring challenges that surface top candidates.
+            AI-powered hiring that surfaces top candidates.
           </p>
         </div>
 
@@ -18,12 +23,12 @@ export default function Home() {
             <CardHeader>
               <CardTitle>For Employers</CardTitle>
               <CardDescription>
-                Create challenges and review candidate submissions.
+                Create jobs and review candidate submissions.
               </CardDescription>
             </CardHeader>
             <div className="p-6 pt-0 space-y-2">
               <Link href="/create" className="block">
-                <Button className="w-full">Create Challenge</Button>
+                <Button className="w-full">Create Job</Button>
               </Link>
               <Link href="/dashboard" className="block">
                 <Button variant="outline" className="w-full">
@@ -37,7 +42,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle>For Candidates</CardTitle>
               <CardDescription>
-                Access your challenge link from the employer.
+                Access your application link from the employer.
               </CardDescription>
             </CardHeader>
             <div className="p-6 pt-0">

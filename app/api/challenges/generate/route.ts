@@ -1,4 +1,4 @@
-import { anthropic } from '@/lib/anthropic';
+import { anthropic } from "@/lib/anthropic";
 
 export const maxDuration = 60;
 
@@ -6,15 +6,15 @@ export async function POST(request: Request) {
   const { role_description, challenge_requirements } = await request.json();
 
   if (!role_description) {
-    return new Response(JSON.stringify({ error: 'Missing role_description' }), {
+    return new Response(JSON.stringify({ error: "Missing role_description" }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
   const systemPrompt = `You are an expert at creating work-sample hiring challenges.
 
-TASK: Generate a project challenge that candidates must build, plus 2-3 supplementary questions.
+TASK: Generate a project challenge that candidates must build, plus 2 supplementary questions.
 
 OUTPUT FORMAT:
 1. First, write a brief intro (2-3 sentences) setting context.
@@ -30,7 +30,7 @@ OUTPUT FORMAT:
 
 4. Then output: ---QUESTIONS---
 
-5. Then output a JSON array with 2-3 supplementary questions. Each question has:
+5. Then output a JSON array with 2 supplementary questions. Each question has:
    - id: a unique UUID
    - text: the question
    - order: position (1, 2, 3)
@@ -89,17 +89,20 @@ Submit a link to your working demo. Time expectation: ~2 hours.
     : `Create questions for this role:\n\n${role_description}`;
 
   const stream = await anthropic.messages.stream({
-    model: 'claude-sonnet-4-20250514',
+    model: "claude-sonnet-4-20250514",
     max_tokens: 2000,
     system: systemPrompt,
-    messages: [{ role: 'user', content: userMessage }],
+    messages: [{ role: "user", content: userMessage }],
   });
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
       for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
           controller.enqueue(encoder.encode(event.delta.text));
         }
       }
@@ -109,8 +112,8 @@ Submit a link to your working demo. Time expectation: ~2 hours.
 
   return new Response(readable, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Transfer-Encoding': 'chunked',
+      "Content-Type": "text/plain; charset=utf-8",
+      "Transfer-Encoding": "chunked",
     },
   });
 }

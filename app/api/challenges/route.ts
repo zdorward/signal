@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { role_description, challenge_requirements, intro_text, challenge_text, questions_json } = body;
+  const { role_description, challenge_requirements, intro_text, challenge_text, questions_json, deadline } = body;
 
   if (!role_description || !intro_text || !challenge_text || !questions_json) {
     return NextResponse.json(
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       intro_text,
       challenge_text,
       questions_json,
+      deadline: deadline || null,
     })
     .select()
     .single();

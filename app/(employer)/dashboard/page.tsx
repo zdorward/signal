@@ -1,13 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -15,14 +12,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import type {
   Challenge,
   SubmissionWithEvaluation,
   CriterionScore,
   Question,
   Answer,
-} from '@/lib/types';
+} from "@/lib/types";
 
 function calculateAverageScore(scores: CriterionScore[]): number {
   if (!scores || scores.length === 0) return 0;
@@ -36,31 +33,37 @@ function getJobNumber(id: string): string {
 
 export default function DashboardPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [submissions, setSubmissions] = useState<SubmissionWithEvaluation[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionWithEvaluation[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedChallengeId, setExpandedChallengeId] = useState<string | null>(null);
-  const [generatingRejection, setGeneratingRejection] = useState<string | null>(null);
+  const [expandedChallengeId, setExpandedChallengeId] = useState<string | null>(
+    null,
+  );
+  const [generatingRejection, setGeneratingRejection] = useState<string | null>(
+    null,
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch('/api/challenges');
+      const response = await fetch("/api/challenges");
       const data = await response.json();
       setChallenges(data);
     } catch (error) {
-      console.error('Failed to fetch challenges:', error);
+      console.error("Failed to fetch challenges:", error);
     }
   };
 
   const fetchSubmissions = async () => {
     try {
-      const response = await fetch('/api/submissions');
+      const response = await fetch("/api/submissions");
       const data = await response.json();
       setSubmissions(data);
     } catch (error) {
-      console.error('Failed to fetch submissions:', error);
+      console.error("Failed to fetch submissions:", error);
     }
   };
 
@@ -84,45 +87,50 @@ export default function DashboardPage() {
 
   const deleteChallenge = async (e: React.MouseEvent, challengeId: string) => {
     e.stopPropagation();
-    if (!confirm('Delete this position? This will also delete all submissions.')) return;
+    if (
+      !confirm("Delete this position? This will also delete all submissions.")
+    )
+      return;
 
     setDeletingId(challengeId);
     try {
       const response = await fetch(`/api/challenges/${challengeId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (response.ok) {
         setChallenges((prev) => prev.filter((c) => c.id !== challengeId));
-        setSubmissions((prev) => prev.filter((s) => s.challenge_id !== challengeId));
+        setSubmissions((prev) =>
+          prev.filter((s) => s.challenge_id !== challengeId),
+        );
       }
     } catch (error) {
-      console.error('Failed to delete challenge:', error);
+      console.error("Failed to delete challenge:", error);
     } finally {
       setDeletingId(null);
     }
   };
 
   const clearAllSubmissions = async () => {
-    if (!confirm('Clear ALL submissions? This cannot be undone.')) return;
+    if (!confirm("Clear ALL submissions? This cannot be undone.")) return;
 
     try {
-      const response = await fetch('/api/submissions', {
-        method: 'DELETE',
+      const response = await fetch("/api/submissions", {
+        method: "DELETE",
       });
       if (response.ok) {
         setSubmissions([]);
       }
     } catch (error) {
-      console.error('Failed to clear submissions:', error);
+      console.error("Failed to clear submissions:", error);
     }
   };
 
   const handleGenerateRejection = async (submissionId: string) => {
     setGeneratingRejection(submissionId);
     try {
-      const response = await fetch('/api/reject-draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/reject-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ submission_id: submissionId }),
       });
       const data = await response.json();
@@ -132,13 +140,16 @@ export default function DashboardPage() {
           s.id === submissionId && s.evaluation
             ? {
                 ...s,
-                evaluation: { ...s.evaluation, rejection_draft: data.rejection_draft },
+                evaluation: {
+                  ...s.evaluation,
+                  rejection_draft: data.rejection_draft,
+                },
               }
-            : s
-        )
+            : s,
+        ),
       );
     } catch (error) {
-      console.error('Failed to generate rejection:', error);
+      console.error("Failed to generate rejection:", error);
     } finally {
       setGeneratingRejection(null);
     }
@@ -150,8 +161,16 @@ export default function DashboardPage() {
     const bReview = b.evaluation?.worth_human_attention ? 1 : 0;
     if (bReview !== aReview) return bReview - aReview;
 
-    const aScore = a.evaluation ? calculateAverageScore(a.evaluation.criterion_scores_json as CriterionScore[]) : 0;
-    const bScore = b.evaluation ? calculateAverageScore(b.evaluation.criterion_scores_json as CriterionScore[]) : 0;
+    const aScore = a.evaluation
+      ? calculateAverageScore(
+          a.evaluation.criterion_scores_json as CriterionScore[],
+        )
+      : 0;
+    const bScore = b.evaluation
+      ? calculateAverageScore(
+          b.evaluation.criterion_scores_json as CriterionScore[],
+        )
+      : 0;
     return bScore - aScore;
   });
 
@@ -166,9 +185,11 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold">Open Positions</h1>
-            <p className="text-gray-600">Manage your job postings and application links.</p>
+            <p className="text-gray-600">
+              Manage your job postings and application links.
+            </p>
           </div>
-          <Button onClick={() => (window.location.href = '/create')}>
+          <Button onClick={() => (window.location.href = "/create")}>
             + New Position
           </Button>
         </div>
@@ -176,7 +197,7 @@ export default function DashboardPage() {
         {challenges.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-gray-500">
-              No positions yet.{' '}
+              No positions yet.{" "}
               <a href="/create" className="text-blue-600 hover:underline">
                 Create your first position
               </a>
@@ -202,7 +223,9 @@ export default function DashboardPage() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() =>
                         setExpandedChallengeId(
-                          expandedChallengeId === challenge.id ? null : challenge.id
+                          expandedChallengeId === challenge.id
+                            ? null
+                            : challenge.id,
                         )
                       }
                     >
@@ -221,7 +244,7 @@ export default function DashboardPage() {
                           size="sm"
                           onClick={(e) => copyApplyLink(e, challenge.id)}
                         >
-                          {copiedId === challenge.id ? 'Copied!' : 'Copy Link'}
+                          {copiedId === challenge.id ? "Copied!" : "Copy Link"}
                         </Button>
                         <Button
                           variant="ghost"
@@ -230,7 +253,7 @@ export default function DashboardPage() {
                           onClick={(e) => deleteChallenge(e, challenge.id)}
                           disabled={deletingId === challenge.id}
                         >
-                          {deletingId === challenge.id ? '...' : 'Delete'}
+                          {deletingId === challenge.id ? "..." : "Delete"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -240,30 +263,44 @@ export default function DashboardPage() {
                           <div className="p-6 space-y-4">
                             {challenge.intro_text && (
                               <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-1">Introduction</h4>
-                                <p className="text-gray-700">{challenge.intro_text}</p>
+                                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                                  Introduction
+                                </h4>
+                                <p className="text-gray-700">
+                                  {challenge.intro_text}
+                                </p>
                               </div>
                             )}
                             {challenge.challenge_text && (
                               <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-1">Challenge</h4>
+                                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                                  Project
+                                </h4>
                                 <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
                                   {challenge.challenge_text}
                                 </div>
                               </div>
                             )}
-                            {challenge.questions_json && challenge.questions_json.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-2">Questions</h4>
-                                <ul className="space-y-2">
-                                  {(challenge.questions_json as Question[]).map((q, i) => (
-                                    <li key={q.id} className="text-gray-700">
-                                      <span className="font-medium">Q{i + 1}:</span> {q.text}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                            {challenge.questions_json &&
+                              challenge.questions_json.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                    Questions
+                                  </h4>
+                                  <ul className="space-y-2">
+                                    {(
+                                      challenge.questions_json as Question[]
+                                    ).map((q, i) => (
+                                      <li key={q.id} className="text-gray-700">
+                                        <span className="font-medium">
+                                          Q{i + 1}:
+                                        </span>{" "}
+                                        {q.text}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -295,7 +332,8 @@ export default function DashboardPage() {
         {submissions.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-gray-500">
-              No applications yet. Share position links with candidates to get started.
+              No applications yet. Share position links with candidates to get
+              started.
             </CardContent>
           </Card>
         ) : (
@@ -315,7 +353,8 @@ export default function DashboardPage() {
                 {sortedSubmissions.map((submission) => {
                   const avgScore = submission.evaluation
                     ? calculateAverageScore(
-                        submission.evaluation.criterion_scores_json as CriterionScore[]
+                        submission.evaluation
+                          .criterion_scores_json as CriterionScore[],
                       )
                     : null;
 
@@ -325,12 +364,14 @@ export default function DashboardPage() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() =>
                         setExpandedId(
-                          expandedId === submission.id ? null : submission.id
+                          expandedId === submission.id ? null : submission.id,
                         )
                       }
                     >
                       <TableCell className="font-mono text-sm">
-                        {submission.challenge ? getJobNumber(submission.challenge.id) : '-'}
+                        {submission.challenge
+                          ? getJobNumber(submission.challenge.id)
+                          : "-"}
                       </TableCell>
                       <TableCell className="font-medium">
                         {submission.candidate_name}
@@ -340,10 +381,10 @@ export default function DashboardPage() {
                           <Badge
                             variant={
                               avgScore >= 4
-                                ? 'default'
+                                ? "default"
                                 : avgScore >= 3
-                                ? 'secondary'
-                                : 'destructive'
+                                  ? "secondary"
+                                  : "destructive"
                             }
                           >
                             {avgScore}/5
@@ -360,7 +401,7 @@ export default function DashboardPage() {
                             <span className="text-red-500">✗</span>
                           )
                         ) : (
-                          '-'
+                          "-"
                         )}
                       </TableCell>
                       <TableCell>
@@ -373,12 +414,12 @@ export default function DashboardPage() {
                             <span className="text-gray-400">-</span>
                           )
                         ) : (
-                          '-'
+                          "-"
                         )}
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm">
-                          {expandedId === submission.id ? '▲' : '▼'}
+                          {expandedId === submission.id ? "▲" : "▼"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -393,7 +434,7 @@ export default function DashboardPage() {
           {expandedId && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden mt-4"
             >
@@ -448,10 +489,10 @@ export default function DashboardPage() {
                         <h4 className="font-semibold">Questions & Answers</h4>
                         {questions.map((question) => {
                           const answer = answers.find(
-                            (a) => a.question_id === question.id
+                            (a) => a.question_id === question.id,
                           );
                           const questionScores = criterionScores.filter(
-                            (s) => s.question_id === question.id
+                            (s) => s.question_id === question.id,
                           );
 
                           return (
@@ -463,7 +504,7 @@ export default function DashboardPage() {
                                 {question.text}
                               </p>
                               <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                {answer?.text || '(No answer)'}
+                                {answer?.text || "(No answer)"}
                               </p>
 
                               {questionScores.length > 0 && (
@@ -473,7 +514,7 @@ export default function DashboardPage() {
                                   </p>
                                   {questionScores.map((score) => {
                                     const criterion = question.criteria.find(
-                                      (c) => c.id === score.criterion_id
+                                      (c) => c.id === score.criterion_id,
                                     );
                                     return (
                                       <div
@@ -483,10 +524,10 @@ export default function DashboardPage() {
                                         <Badge
                                           variant={
                                             score.score >= 4
-                                              ? 'default'
+                                              ? "default"
                                               : score.score >= 3
-                                              ? 'secondary'
-                                              : 'destructive'
+                                                ? "secondary"
+                                                : "destructive"
                                           }
                                           className="shrink-0"
                                         >
@@ -494,8 +535,8 @@ export default function DashboardPage() {
                                         </Badge>
                                         <div className="text-sm">
                                           <span className="font-medium">
-                                            {criterion?.text || 'Criterion'}:
-                                          </span>{' '}
+                                            {criterion?.text || "Criterion"}:
+                                          </span>{" "}
                                           <span className="text-gray-600">
                                             {score.reasoning}
                                           </span>
@@ -519,7 +560,7 @@ export default function DashboardPage() {
                               {submission.evaluation.summary_bullets.map(
                                 (bullet, i) => (
                                   <li key={i}>{bullet}</li>
-                                )
+                                ),
                               )}
                             </ul>
                           </div>
@@ -550,8 +591,8 @@ export default function DashboardPage() {
                                 disabled={generatingRejection === submission.id}
                               >
                                 {generatingRejection === submission.id
-                                  ? 'Generating...'
-                                  : 'Regenerate'}
+                                  ? "Generating..."
+                                  : "Regenerate"}
                               </Button>
                             </div>
                             {submission.evaluation.rejection_draft && (
