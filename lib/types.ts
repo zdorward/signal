@@ -1,37 +1,61 @@
-export interface RubricItem {
-  criterion: string;
-  weight: number;
-  description: string;
+// Question criterion for evaluation
+export interface Criterion {
+  id: string;
+  text: string;
+  order: number;
 }
 
-export interface RubricScore {
-  criterion: string;
-  score: number;
-  reasoning: string;
+// Question with its evaluation criteria
+export interface Question {
+  id: string;
+  text: string;
+  order: number;
+  word_limit: number;
+  criteria: Criterion[];
 }
 
+// Challenge with questions instead of rubric
 export interface Challenge {
   id: string;
   role_description: string;
-  challenge_text: string;
-  rubric_json: RubricItem[];
+  challenge_requirements: string | null;
+  intro_text: string;
+  questions_json: Question[];
   created_at: string;
 }
 
+// Candidate answer to a question
+export interface Answer {
+  question_id: string;
+  text: string;
+}
+
+// Submission with answers instead of written_explanation
 export interface Submission {
   id: string;
   challenge_id: string;
   candidate_name: string;
   demo_url: string;
-  written_explanation: string;
+  answers_json: Answer[];
   video_path: string | null;
   created_at: string;
 }
 
+// Score for a single criterion
+export interface CriterionScore {
+  criterion_id: string;
+  question_id: string;
+  score: number; // 1-5
+  reasoning: string;
+}
+
+// Evaluation with criterion scores instead of rubric scores
 export interface Evaluation {
   id: string;
   submission_id: string;
-  rubric_scores_json: RubricScore[];
+  criterion_scores_json: CriterionScore[];
+  url_passed: boolean;
+  url_notes: string;
   summary_bullets: string[];
   worth_human_attention: boolean;
   flag_reason: string | null;
