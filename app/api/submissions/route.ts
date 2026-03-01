@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import type { SubmissionWithEvaluation } from '@/lib/types';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,11 +7,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from('submissions')
-    .select(`
-      *,
-      evaluation:evaluations(*),
-      challenge:challenges(*)
-    `)
+    .select('*, evaluation:evaluations(*), challenge:challenges(*)')
     .order('created_at', { ascending: false });
 
   if (challengeId) {
@@ -25,20 +20,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const formatted = (data || []).map((row: Record<string, unknown>) => ({
-    ...row,
-    evaluation: Array.isArray(row.evaluation) ? row.evaluation[0] || null : row.evaluation,
-    challenge: Array.isArray(row.challenge) ? row.challenge[0] || null : row.challenge,
-  })) as SubmissionWithEvaluation[];
+  // Flatten evaluation array to single object
+  const formatted = data.map((s) => ({
+    ...s,
+    evaluation: Array.isArray(s.evaluation) ? s.evaluation[0] || null : s.evaluation,
+    challenge: Array.isArray(s.challenge) ? s.challenge[0] || null : s.challenge,
+  }));
 
   return NextResponse.json(formatted);
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { challenge_id, candidate_name, demo_url, written_explanation, video_path } = body;
+  const { challenge_id, candidate_name, demo_url, answers_json, video_path } = body;
 
-  if (!challenge_id || !candidate_name || !demo_url || !written_explanation) {
+  if (!challenge_id || !candidate_name || !demo_url || !answers_json) {
     return NextResponse.json(
       { error: 'Missing required fields' },
       { status: 400 }
@@ -51,7 +47,7 @@ export async function POST(request: Request) {
       challenge_id,
       candidate_name,
       demo_url,
-      written_explanation,
+      answers_json,
       video_path: video_path || null,
     })
     .select()
@@ -61,9 +57,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Fire-and-forget evaluation - don't await
-  const baseUrl = request.headers.get('origin') || 'http://localhost:3000';
-  fetch(`${baseUrl}/api/evaluate`, {
+  // Fire-and-forget: trigger evaluation
+  fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/evaluate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ submission_id: data.id }),
