@@ -5,7 +5,7 @@ import "./globals.css";
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Signal - AI-Powered Hiring",
+  title: "Signal - Candidate Intelligence",
   description: "Create job applications, evaluate candidates, hire smarter.",
   icons: {
     icon: "/favicon.svg",
