@@ -188,7 +188,9 @@ Evaluate each criterion and provide scores.`;
     // Fire-and-forget: trigger video evaluation if video exists
     if (typedSubmission.video_path) {
       console.log('[evaluate] Triggering video evaluation...');
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/evaluate-video`, {
+      const host = request.headers.get('host') || 'localhost:3000';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      fetch(`${protocol}://${host}/api/evaluate-video`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ submission_id }),
