@@ -18,13 +18,18 @@ export async function POST(request: Request) {
   const startTime = new Date().toISOString();
   console.log(`[evaluate-video] === FUNCTION INVOKED at ${startTime} ===`);
 
-  try {
-    const { submission_id } = await request.json();
-    console.log(`[evaluate-video] Processing submission_id: ${submission_id} at ${startTime}`);
+  let submissionId: string | null = null;
 
-    if (!submission_id) {
+  try {
+    const body = await request.json();
+    submissionId = body.submission_id;
+    console.log(`[evaluate-video] Processing submission_id: ${submissionId} at ${startTime}`);
+
+    if (!submissionId) {
       return NextResponse.json({ error: 'Missing submission_id' }, { status: 400 });
     }
+
+    const submission_id = submissionId;
 
     // Fetch submission with challenge
     const { data: submission, error: subError } = await supabaseAdmin
@@ -327,6 +332,11 @@ Provide your evaluation as JSON only (no markdown):
 
   } catch (error) {
     console.error('[evaluate-video] Unhandled error:', error);
+    // Attempt cleanup on error
+    if (submissionId) {
+      const tempDir = join(tmpdir(), `signal-video-${submissionId}`);
+      await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Video evaluation failed'
     }, { status: 500 });

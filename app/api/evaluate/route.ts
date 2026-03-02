@@ -198,26 +198,28 @@ Evaluate each criterion and provide scores.`;
         || `https://${request.headers.get('host') || 'localhost:3000'}`;
       console.log('[evaluate] Video eval URL:', videoEvalUrl);
 
-      // Retry up to 3 times with delay for cold start issues
-      const triggerVideoEval = async (retries = 3) => {
-        console.log(`[evaluate] Starting video eval trigger to ${videoEvalUrl}/api/evaluate-video`);
-        for (let i = 0; i < retries; i++) {
-          try {
-            console.log(`[evaluate] Video eval attempt ${i + 1} of ${retries}...`);
-            const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ submission_id }),
-            });
-            const responseText = await res.text();
-            console.log(`[evaluate] Video evaluation triggered, status: ${res.status}, response: ${responseText.substring(0, 200)}`);
-            return;
-          } catch (err) {
-            console.error(`[evaluate] Video eval attempt ${i + 1} failed:`, err);
-            if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
+      // Fire-and-forget with timeout - don't wait for Railway to finish processing
+      const triggerVideoEval = async () => {
+        console.log(`[evaluate] Triggering video eval at ${videoEvalUrl}/api/evaluate-video`);
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+          const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submission_id }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          console.log(`[evaluate] Video eval request sent, status: ${res.status}`);
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') {
+            console.log('[evaluate] Video eval request timed out (expected - Railway processing in background)');
+          } else {
+            console.error('[evaluate] Video eval trigger failed:', err);
           }
         }
-        console.error('[evaluate] All video eval attempts failed');
       };
       triggerVideoEval();
     }
