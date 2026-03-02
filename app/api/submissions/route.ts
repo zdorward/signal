@@ -31,8 +31,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  console.log('[submissions] POST started');
   const body = await request.json();
   const { challenge_id, candidate_name, candidate_email, demo_url, answers_json, video_path } = body;
+  console.log('[submissions] Received submission for:', candidate_name);
 
   if (!challenge_id || !candidate_name || !demo_url || !answers_json) {
     return NextResponse.json(
@@ -41,6 +43,8 @@ export async function POST(request: Request) {
     );
   }
 
+  console.log('[submissions] Inserting to Supabase...');
+  const insertStart = Date.now();
   const { data, error } = await supabaseAdmin
     .from('submissions')
     .insert({
@@ -53,6 +57,7 @@ export async function POST(request: Request) {
     })
     .select()
     .single();
+  console.log(`[submissions] Supabase insert completed in ${Date.now() - insertStart}ms`);
 
   if (error) {
     console.error('Submission insert error:', error);
@@ -60,12 +65,17 @@ export async function POST(request: Request) {
   }
 
   // Fire-and-forget: trigger evaluation
-  fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/evaluate`, {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || 'http://localhost:3000';
+  console.log(`[submissions] Triggering evaluation at ${baseUrl}/api/evaluate`);
+  fetch(`${baseUrl}/api/evaluate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ submission_id: data.id }),
-  }).catch(console.error);
+  }).catch((err) => console.error('[submissions] Evaluation trigger error:', err));
 
+  console.log('[submissions] Returning response');
   return NextResponse.json(data, { status: 201 });
 }
 
