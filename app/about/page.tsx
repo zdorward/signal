@@ -1,18 +1,22 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function AboutPage() {
+  const router = useRouter();
   const [view, setView] = useState<"general" | "wealthsimple">("wealthsimple");
 
   return (
     <main className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-muted-foreground hover:text-primary"
+          >
             ← Back
-          </Link>
+          </button>
         </div>
 
         <div>
