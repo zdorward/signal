@@ -12,11 +12,11 @@ export function Navbar() {
           <Link href="/dashboard">
             <Button variant="ghost">Dashboard</Button>
           </Link>
-          <Link href="/about">
-            <Button variant="ghost">About</Button>
-          </Link>
           <Link href="/settings">
             <Button variant="ghost">Settings</Button>
+          </Link>
+          <Link href="/about">
+            <Button variant="ghost">About</Button>
           </Link>
         </nav>
       </div>
