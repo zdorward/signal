@@ -84,13 +84,16 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              Right now, someone at Wealthsimple is watching every video,
-              reading every written explanation, and writing back to every
-              candidate. All of it compressed into 48 hours. With Signal, that
-              changes. Every video has already been watched. Every explanation
-              has already been scored. Every borderline case has already been
-              flagged. The reviewer opens the dashboard and makes decisions.
-              That&apos;s it. That&apos;s the part that actually needed a human.
+              A hiring manager running Wealthsimple&apos;s process today has 48
+              hours to review every submission. At 8-10 minutes per submission
+              (video, written explanation, demo URL), you get through roughly
+              100 before attention starts to degrade. With Signal, each card
+              takes 45 seconds to scan. The same person covers 10 times as many
+              submissions without their judgment dropping. The human isn&apos;t
+              doing less work, they&apos;re doing better work. Instead of
+              processing submissions, they&apos;re making judgment calls.
+              That&apos;s the job that actually needed a human. Signal just
+              makes sure they have the energy to do it well.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -123,13 +126,17 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              Rubric quality for specialized roles. For common roles, Signal
-              generates solid evaluation criteria. For niche positions, a weak
-              rubric creates false confidence. The human stops questioning the
-              shortlist. That&apos;s the failure mode. It doesn&apos;t break
-              loudly, it breaks quietly. That&apos;s where the next investment
-              goes: getting domain experts to validate rubrics before challenges
-              go live.
+              The evaluation pipeline. Right now, Signal works well because the
+              rubric criteria are explicit and the submissions are concrete. At
+              scale, with hundreds of different roles and thousands of
+              submissions, small errors in how the AI scores compound. A rubric
+              that slightly underweights the wrong thing produces a consistently
+              skewed shortlist. Nobody notices because the dashboard looks
+              confident. The risk isn&apos;t one bad decision, it&apos;s a
+              pattern of bad decisions that&apos;s hard to trace back to the
+              rubric. Fixing it requires humans staying close to the output,
+              spot-checking evaluations, and treating the AI scores as a
+              starting point rather than a verdict.
             </p>
 
             <p className="text-foreground pt-4">
