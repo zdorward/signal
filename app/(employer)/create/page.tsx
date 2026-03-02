@@ -22,7 +22,14 @@ export default function CreateChallengePage() {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [challengeRequirements, setChallengeRequirements] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}T23:59`;
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
   const [introText, setIntroText] = useState("");
@@ -262,7 +269,12 @@ export default function CreateChallengePage() {
                 setJobTitle("");
                 setJobDescription("");
                 setChallengeRequirements("");
-                setDeadline("");
+                const newDeadline = new Date();
+                newDeadline.setDate(newDeadline.getDate() + 7);
+                const year = newDeadline.getFullYear();
+                const month = String(newDeadline.getMonth() + 1).padStart(2, "0");
+                const day = String(newDeadline.getDate()).padStart(2, "0");
+                setDeadline(`${year}-${month}-${day}T23:59`);
                 setStreamedContent("");
                 setHasGenerated(false);
               }}
