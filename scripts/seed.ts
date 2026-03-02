@@ -559,6 +559,11 @@ What seems like a waste of money might be important to someone. Maybe they're no
 async function seed() {
   console.log('Seeding database...');
 
+  // Clear existing submissions and evaluations (keeps challenges/positions)
+  console.log('Clearing existing submissions...');
+  await supabase.from('evaluations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('submissions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
   // Create challenge
   console.log('Creating challenge...');
   const { error: challengeError } = await supabase.from('challenges').insert(challenge);

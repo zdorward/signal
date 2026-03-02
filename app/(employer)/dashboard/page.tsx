@@ -139,6 +139,26 @@ export default function DashboardPage() {
     }
   };
 
+  const [seeding, setSeeding] = useState(false);
+
+  const seedDatabase = async () => {
+    if (!confirm("This will clear all submissions and add demo data. Continue?")) return;
+
+    setSeeding(true);
+    try {
+      const response = await fetch("/api/seed", {
+        method: "POST",
+      });
+      if (response.ok) {
+        await Promise.all([fetchChallenges(), fetchSubmissions()]);
+      }
+    } catch (error) {
+      console.error("Failed to seed database:", error);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const handleGenerateRejection = async (submissionId: string) => {
     setGeneratingRejection(submissionId);
     try {
@@ -373,11 +393,16 @@ export default function DashboardPage() {
               Review candidate submissions and AI evaluations.
             </p>
           </div>
-          {submissions.length > 0 && (
-            <Button variant="outline" size="sm" onClick={clearAllSubmissions}>
-              Clear All
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={seedDatabase} disabled={seeding}>
+              {seeding ? "Seeding..." : "Seed Demo Data"}
             </Button>
-          )}
+            {submissions.length > 0 && (
+              <Button variant="outline" size="sm" onClick={clearAllSubmissions}>
+                Clear All
+              </Button>
+            )}
+          </div>
         </div>
 
         {submissions.length === 0 ? (
