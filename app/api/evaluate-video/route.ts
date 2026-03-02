@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     const ffmpegStart = Date.now();
     try {
       await execAsync(
-        `ffmpeg -i "${videoPath}" -vf "fps=0.5,scale=640:-1" -frames:v 30 -q:v 2 "${tempDir}/frame_%03d.jpg" -y`,
+        `ffmpeg -i "${videoPath}" -vf "fps=0.33,scale=480:-1" -frames:v 10 -q:v 5 "${tempDir}/frame_%03d.jpg" -y`,
         { timeout: 60000 }
       );
       console.log(`[evaluate-video] Frames extracted in ${Date.now() - ffmpegStart}ms`);
