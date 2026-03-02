@@ -71,7 +71,7 @@ Your system must:
 const candidates = [
   // HIGH QUALITY (6 candidates)
   {
-    name: 'Sarah Chen',
+    name: 'Candidate 1',
     email: 'sarah.chen@example.com',
     quality: 'high',
     demo_url: 'https://github.com/sarahchen/ai-tax-optimizer',
@@ -99,7 +99,7 @@ More importantly, there's a psychological dimension. When people make their own 
     video_summary: 'AI tax optimization tool',
   },
   {
-    name: 'Marcus Williams',
+    name: 'Candidate 2',
     email: 'marcus.w@example.com',
     quality: 'high',
     demo_url: 'https://replit.com/@marcusw/portfolio-rebalancer',
@@ -127,7 +127,7 @@ Risk tolerance isn't just a number. It's a reflection of someone's relationship 
     video_summary: 'Portfolio rebalancing automation',
   },
   {
-    name: 'Priya Sharma',
+    name: 'Candidate 3',
     email: 'priya.sharma@example.com',
     quality: 'high',
     demo_url: 'https://ai-financial-coach.vercel.app',
@@ -155,7 +155,7 @@ The human must weigh factors that aren't in the data: family plans, career ambit
     video_summary: 'AI financial coaching app',
   },
   {
-    name: 'James Liu',
+    name: 'Candidate 4',
     email: 'james.liu@example.com',
     quality: 'high',
     demo_url: 'https://github.com/jamesliu/fraud-detection-demo',
@@ -183,7 +183,7 @@ A human reviewer can call the customer, investigate context, make judgment calls
     video_summary: 'Fraud detection with human oversight',
   },
   {
-    name: 'Elena Rodriguez',
+    name: 'Candidate 5',
     email: 'elena.r@example.com',
     quality: 'high',
     demo_url: 'https://retirement-planner-ai.netlify.app',
@@ -211,7 +211,7 @@ The AI can show someone exactly what different retirement dates mean financially
     video_summary: 'AI retirement planning system',
   },
   {
-    name: 'David Park',
+    name: 'Candidate 6',
     email: 'david.park@example.com',
     quality: 'high',
     demo_url: 'https://github.com/dpark/investment-research-ai',
@@ -241,7 +241,7 @@ Ownership of decisions is essential for learning. The AI should make users more 
 
   // MEDIUM QUALITY (8 candidates)
   {
-    name: 'Alex Thompson',
+    name: 'Candidate 7',
     email: 'alex.t@example.com',
     quality: 'medium',
     demo_url: 'https://github.com/alexthompson/budget-bot',
@@ -265,7 +265,7 @@ People have different priorities for their money. The AI might think someone sho
     video_summary: 'Budget categorization bot',
   },
   {
-    name: 'Jennifer Kim',
+    name: 'Candidate 8',
     email: 'jennifer.kim@example.com',
     quality: 'medium',
     demo_url: 'https://expense-tracker-demo.herokuapp.com',
@@ -289,7 +289,7 @@ Big purchases like a car or vacation involve more than just financial calculatio
     video_summary: 'Expense tracking system',
   },
   {
-    name: 'Michael Brown',
+    name: 'Candidate 9',
     email: 'mbrown@example.com',
     quality: 'medium',
     demo_url: 'https://stock-alerts.vercel.app',
@@ -313,7 +313,7 @@ Selling a stock can have tax implications and other consequences that the system
     video_summary: 'Stock alert notifications',
   },
   {
-    name: 'Lisa Wang',
+    name: 'Candidate 10',
     email: 'lisa.wang@example.com',
     quality: 'medium',
     demo_url: 'https://github.com/lisawang/savings-gamification',
@@ -337,7 +337,7 @@ Everyone's situation is different. Some people need more of a buffer than others
     video_summary: 'Savings gamification app',
   },
   {
-    name: 'Ryan Murphy',
+    name: 'Candidate 11',
     email: 'ryan.murphy@example.com',
     quality: 'medium',
     demo_url: 'https://crypto-portfolio-tracker.web.app',
@@ -361,7 +361,7 @@ Crypto is highly volatile and speculative. People need to make their own choices
     video_summary: 'Crypto portfolio tracker',
   },
   {
-    name: 'Amanda Foster',
+    name: 'Candidate 12',
     email: 'amanda.f@example.com',
     quality: 'medium',
     demo_url: 'https://bill-splitter-ai.netlify.app',
@@ -385,7 +385,7 @@ Group dynamics and relationships are complicated. The AI can suggest fair splits
     video_summary: 'AI bill splitting app',
   },
   {
-    name: 'Chris Anderson',
+    name: 'Candidate 13',
     email: 'chris.a@example.com',
     quality: 'medium',
     demo_url: 'https://github.com/canderson/financial-news-summarizer',
@@ -409,7 +409,7 @@ News can be misleading or out of context. Even with AI summarization, humans nee
     video_summary: 'Financial news summarizer',
   },
   {
-    name: 'Nicole Zhang',
+    name: 'Candidate 14',
     email: 'nicole.z@example.com',
     quality: 'medium',
     demo_url: 'https://subscription-manager.vercel.app',
@@ -435,7 +435,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
 
   // LOW QUALITY (6 candidates)
   {
-    name: 'Jake Wilson',
+    name: 'Candidate 15',
     email: 'jake.wilson@example.com',
     quality: 'low',
     demo_url: 'https://todo-app-demo.com',
@@ -455,7 +455,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
     video_summary: 'Unrelated todo app',
   },
   {
-    name: 'Brittany Miller',
+    name: 'Candidate 16',
     email: 'brittany.m@example.com',
     quality: 'low',
     demo_url: 'https://my-portfolio-site.wixsite.com',
@@ -475,7 +475,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
     video_summary: 'Personal portfolio website',
   },
   {
-    name: 'Tyler James',
+    name: 'Candidate 17',
     email: 'tyler.j@example.com',
     quality: 'low',
     demo_url: 'https://broken-link-404.com',
@@ -495,7 +495,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
     video_summary: null,
   },
   {
-    name: 'Samantha Davis',
+    name: 'Candidate 18',
     email: 'sam.davis@example.com',
     quality: 'low',
     demo_url: 'https://github.com/samdavis/hello-world',
@@ -515,7 +515,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
     video_summary: 'Basic hello world repo',
   },
   {
-    name: 'Kevin Clark',
+    name: 'Candidate 19',
     email: 'kevin.clark@example.com',
     quality: 'low',
     demo_url: 'https://example.com',
@@ -535,7 +535,7 @@ What seems like a waste of money might be important to someone. Maybe they're no
     video_summary: 'No demo provided',
   },
   {
-    name: 'Ashley White',
+    name: 'Candidate 20',
     email: 'ashley.w@example.com',
     quality: 'low',
     demo_url: 'https://linkedin.com/in/ashleywhite',
@@ -558,12 +558,6 @@ What seems like a waste of money might be important to someone. Maybe they're no
 
 async function seed() {
   console.log('Seeding database...');
-
-  // Delete existing data
-  console.log('Clearing existing data...');
-  await supabase.from('evaluations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('submissions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('challenges').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
   // Create challenge
   console.log('Creating challenge...');
@@ -620,6 +614,7 @@ async function seed() {
       worth_human_attention: avgScore >= 4 && candidate.url_passed,
       flag_reason: null,
       rejection_draft: avgScore < 3 ? `Dear ${candidate.name.split(' ')[0]},\n\nThank you for your interest in the AI Builder role at Wealthsimple. After careful review, we've decided to move forward with other candidates.\n\nWe appreciate the time you invested in your application.\n\nBest,\nThe Wealthsimple Team` : null,
+      interview_draft: (avgScore >= 3 && candidate.url_passed && (candidate.video_score ?? 0) >= 8) ? `Dear ${candidate.name.split(' ')[0]},\n\nThank you for applying to the AI Builder role at Wealthsimple. We were impressed by your submission and would love to learn more about you.\n\nWould you be available for a 30-minute conversation next week? Please let us know your availability and we'll send over a calendar invite.\n\nLooking forward to speaking with you!\n\nBest,\nThe Wealthsimple Team` : null,
     });
 
     if (evalError) {

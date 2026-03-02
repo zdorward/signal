@@ -65,6 +65,7 @@ export interface Evaluation {
   worth_human_attention: boolean;
   flag_reason: string | null;
   rejection_draft: string | null;
+  interview_draft: string | null;
   created_at: string;
 }
 

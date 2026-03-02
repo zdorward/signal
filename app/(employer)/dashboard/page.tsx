@@ -178,6 +178,11 @@ export default function DashboardPage() {
   };
 
   const sortedSubmissions = [...submissions].sort((a, b) => {
+    // Applications being evaluated go to top
+    const aEvaluating = !a.evaluation;
+    const bEvaluating = !b.evaluation;
+    if (aEvaluating !== bEvaluating) return aEvaluating ? -1 : 1;
+
     const aQuestionsPass = questionsPass(a);
     const bQuestionsPass = questionsPass(b);
     const aUrlPass = a.evaluation?.url_passed ?? false;
@@ -727,41 +732,75 @@ export default function DashboardPage() {
                                               </div>
                                             )}
 
-                                            {/* Rejection Draft */}
-                                            <div>
-                                              <div className="flex items-center gap-4 mb-2">
-                                                <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Rejection Draft</h4>
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleGenerateRejection(submission.id);
-                                                  }}
-                                                  disabled={generatingRejection === submission.id}
-                                                >
-                                                  {generatingRejection === submission.id
-                                                    ? "Generating..."
-                                                    : "Regenerate"}
-                                                </Button>
-                                              </div>
-                                              {submission.evaluation.rejection_draft && (
-                                                <>
-                                                  <pre className="text-sm text-foreground whitespace-pre-wrap bg-background p-4 border border-border mb-3">
-                                                    {submission.evaluation.rejection_draft}
-                                                  </pre>
-                                                  <Button
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      alert("Email sending is not implemented yet.");
-                                                    }}
-                                                  >
-                                                    Send Email
-                                                  </Button>
-                                                </>
-                                              )}
-                                            </div>
+                                            {/* Email Draft - Interview or Rejection */}
+                                            {(() => {
+                                              const isPriority = questionsPass(submission) &&
+                                                submission.evaluation.url_passed &&
+                                                (submission.evaluation.video_score ?? 0) >= 8;
+
+                                              if (isPriority) {
+                                                return (
+                                                  <div>
+                                                    <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Interview Offer Draft</h4>
+                                                    {submission.evaluation.interview_draft ? (
+                                                      <>
+                                                        <pre className="text-sm text-foreground whitespace-pre-wrap bg-background p-4 border border-primary mb-3">
+                                                          {submission.evaluation.interview_draft}
+                                                        </pre>
+                                                        <Button
+                                                          size="sm"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            alert("Email sending is not implemented yet.");
+                                                          }}
+                                                        >
+                                                          Send Email
+                                                        </Button>
+                                                      </>
+                                                    ) : (
+                                                      <p className="text-sm text-muted-foreground">No interview draft generated yet.</p>
+                                                    )}
+                                                  </div>
+                                                );
+                                              }
+
+                                              return (
+                                                <div>
+                                                  <div className="flex items-center gap-4 mb-2">
+                                                    <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Rejection Draft</h4>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleGenerateRejection(submission.id);
+                                                      }}
+                                                      disabled={generatingRejection === submission.id}
+                                                    >
+                                                      {generatingRejection === submission.id
+                                                        ? "Generating..."
+                                                        : "Regenerate"}
+                                                    </Button>
+                                                  </div>
+                                                  {submission.evaluation.rejection_draft && (
+                                                    <>
+                                                      <pre className="text-sm text-foreground whitespace-pre-wrap bg-background p-4 border border-border mb-3">
+                                                        {submission.evaluation.rejection_draft}
+                                                      </pre>
+                                                      <Button
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          alert("Email sending is not implemented yet.");
+                                                        }}
+                                                      >
+                                                        Send Email
+                                                      </Button>
+                                                    </>
+                                                  )}
+                                                </div>
+                                              );
+                                            })()}
                                           </>
                                         )}
 
