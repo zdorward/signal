@@ -54,27 +54,43 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              The resume made sense when applying for a job was expensive. You printed it, mailed it, or hand-delivered it. Candidates applied to a handful of roles they genuinely wanted. Employers received a manageable pile and read them carefully. The signal was decent because the friction was real.
+              The resume made sense when applying for a job was expensive. You
+              printed it, mailed it, or hand-delivered it. Candidates applied to
+              a handful of roles they actually wanted. Employers got a
+              manageable pile and read them carefully. The friction was real, so
+              the signal was real.
             </p>
 
             <p>
-              That world is gone. AI writes resumes in seconds. ATS systems screen them automatically. Candidates apply to hundreds of roles with one click. The result is a system where AI generates applications and AI filters them, and no human has evaluated another human at any point in the process. The signal has collapsed entirely.
+              That world is gone. AI writes resumes in seconds. ATS systems
+              screen them automatically. Candidates apply to hundreds of roles
+              with one click. Nobody is evaluating a human anymore. AI generates
+              the applications, AI filters them, and the whole thing is just
+              noise.
             </p>
 
             <p>
-              Wealthsimple understood this and did something about it — they asked for proof of work instead of a resume. You can&apos;t generate a working system with a prompt. What you can do is spend two hours building something real, which immediately separates candidates who want this specific job from candidates who are spray-applying to everything.
+              Wealthsimple figured out the escape: require proof of work. You
+              can generate a resume with a prompt. You cannot generate a working
+              system with one. Asking candidates to build something real
+              immediately separates the people who want this job from the people
+              who are applying to everything.
             </p>
 
-            <p className="text-foreground">
-              Signal is the infrastructure that makes that process scale.
-            </p>
+            <p>The problem is it doesn&apos;t scale. Signal fixes that.</p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
               What the human can now do
             </h2>
 
             <p>
-              A hiring manager running Wealthsimple&apos;s process today watches every video, reads every written explanation, and personally responds to every candidate — compressed into 48 hours. Signal changes what that person can do: instead of processing submissions, they evaluate people. Every video has already been watched. Every explanation has already been scored. Every borderline case has already been flagged. The human opens the dashboard and makes decisions — which is the only part that required a human in the first place.
+              Right now, someone at Wealthsimple is watching every video,
+              reading every written explanation, and writing back to every
+              candidate. All of it compressed into 48 hours. With Signal, that
+              changes. Every video has already been watched. Every explanation
+              has already been scored. Every borderline case has already been
+              flagged. The reviewer opens the dashboard and makes decisions.
+              That&apos;s it. That&apos;s the part that actually needed a human.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -82,7 +98,12 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              Signal&apos;s AI watches demo videos, transcribes audio, and evaluates whether the candidate built something real or mocked something up. It scores written explanations against an explicit rubric — did they define the human boundary, did they demonstrate systems thinking, does the demo actually work? It produces a structured summary of every submission and drafts a personalized rejection for every candidate who doesn&apos;t advance. It does the processing so the human can do the judging.
+              Signal watches the demo videos, transcribes the audio, and
+              determines whether the candidate built something real or mocked
+              something up. It scores written explanations against a rubric. It
+              produces a summary of every submission. It drafts a personalized
+              rejection for every candidate who doesn&apos;t advance. The processing
+              happens before the human ever opens the dashboard.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -90,7 +111,11 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              The offer decision. Hiring carries legal weight, requires reading a person&apos;s potential rather than their current output, and involves a cultural judgment that no rubric can capture. An experienced engineer with an underwhelming demo might be exactly who you need. A polished submission might hide someone who can&apos;t operate in ambiguity. AI surfaces the signal — the human decides what it means.
+              The offer decision. Hiring has legal weight. It requires reading
+              someone&apos;s potential, not just their output. A strong demo doesn&apos;t
+              guarantee the right person. A weak demo doesn&apos;t disqualify one
+              either. That judgment belongs to a human. AI surfaces the signal,
+              the human decides what it means.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -98,11 +123,17 @@ export default function AboutPage() {
             </h2>
 
             <p>
-              Rubric quality for specialized roles. Signal generates evaluation criteria from a job description, and for common roles this works well. For highly specialized positions — a regulatory compliance lead, a senior risk officer — the rubric may not capture what genuine expertise looks like. The risk isn&apos;t a bad hire. It&apos;s false confidence in a shortlist the human stops questioning. That&apos;s where careful oversight and domain-specific rubric validation becomes the next engineering investment.
+              Rubric quality for specialized roles. For common roles, Signal
+              generates solid evaluation criteria. For niche positions, a weak
+              rubric creates false confidence. The human stops questioning the
+              shortlist. That&apos;s the failure mode. It doesn&apos;t break loudly, it
+              breaks quietly. That&apos;s where the next investment goes: getting
+              domain experts to validate rubrics before challenges go live.
             </p>
 
             <p className="text-foreground pt-4">
-              The process should be harder to game, not easier to automate. Signal is built on that principle.
+              The goal isn&apos;t to make hiring easier to automate. It&apos;s to make it
+              harder to fake.
             </p>
           </article>
         ) : (
@@ -111,52 +142,57 @@ export default function AboutPage() {
               The case for proof-of-work hiring
             </p>
 
+            <p>The hiring process is broken. Everyone knows it.</p>
+
             <p>
-              The hiring process is broken, and everyone knows it.
+              Ten years ago, editing your resume took real effort. You picked a
+              few roles you actually wanted and applied carefully. Remote work
+              wasn&apos;t everywhere. The friction meant something. It filtered out
+              people who weren&apos;t serious.
             </p>
 
             <p>
-              On one side, candidates spend hours crafting resumes and cover letters that get filtered by automated systems looking for keyword matches. They apply to hundreds of positions, hoping something sticks. On the other side, employers wade through floods of applications, most generated or enhanced by AI, trying to find genuine signal in an ocean of noise.
+              Now AI writes the resume. AI screens it. Candidates apply to
+              hundreds of jobs in an afternoon. Employers get flooded. Nobody
+              wins. The tools built to help made everything worse.
             </p>
 
             <p>
-              The tools meant to help have made things worse. ATS systems reject qualified candidates for missing keywords. AI resume builders produce polished documents that reveal nothing about actual capability. LinkedIn endorsements are exchanged like trading cards. The entire system optimizes for appearance over substance.
-            </p>
-
-            <p>
-              The result is a market failure. Good candidates get filtered out. Mediocre candidates with optimized profiles get through. Employers spend enormous resources on interviews that could have been avoided. Everyone loses time and trust.
+              There&apos;s also a skill problem. An engineer with 10 years of
+              experience at some legacy company might be far less useful than a
+              new grad who&apos;s been building with modern AI tools. The resume
+              doesn&apos;t tell you that. The interview doesn&apos;t either. Leetcode
+              definitely doesn&apos;t. We&apos;re testing people on things AI can do in
+              seconds, trying to infer whether they can handle problems that
+              didn&apos;t exist when the test was designed.
             </p>
 
             <p className="text-foreground font-medium">
-              But there&apos;s one thing that cuts through all of this: proof of work.
+              The only thing that cuts through it is proof of work.
             </p>
 
             <p>
-              You can fake a resume. You can&apos;t fake a working product. You can embellish your experience. You can&apos;t embellish a deployed system that reviewers can actually use. The demo doesn&apos;t lie.
+              You can fake a resume. You can&apos;t fake a working product. You can
+              memorize interview answers. You can&apos;t memorize your way to a
+              deployed system. The demo doesn&apos;t lie.
             </p>
 
             <p>
-              This is the insight Signal is built on. Instead of asking candidates to describe what they can do, we ask them to show it. Instead of parsing resumes for signals of competence, we evaluate actual artifacts. Instead of trusting claims, we verify capability.
+              Signal is built on that. Employers define a challenge. Candidates
+              build something. AI handles the evaluation workload so the human
+              can focus on the judgment call at the end. The submission tells
+              you more in two minutes than a resume tells you in twenty.
             </p>
 
             <p>
-              The approach is simple: employers define a challenge relevant to the role. Candidates build something that demonstrates their skills. AI assists in evaluation—analyzing the submission, checking if the demo works, assessing the quality of thinking in written responses—but the core signal comes from the work itself.
-            </p>
-
-            <p>
-              This isn&apos;t about making hiring harder. It&apos;s about making it more honest. A candidate who can build a working solution in a weekend tells you more than a candidate with a perfect resume and rehearsed interview answers. The investment of effort is itself a signal—of genuine interest, of capability under constraints, of the ability to ship.
-            </p>
-
-            <p>
-              Signal exists because the old methods have failed. Resumes don&apos;t predict performance. Interviews are easily gamed. Credentials indicate access, not ability. The only reliable indicator of whether someone can do the work is whether they&apos;ve done the work.
+              It also does something else. Requiring real work filters for
+              genuine interest. Someone who spends a weekend building a system
+              for your company wants to work there. That&apos;s a signal too.
             </p>
 
             <p className="text-foreground">
-              We&apos;re not trying to fix hiring with more AI. We&apos;re trying to fix it with more proof.
-            </p>
-
-            <p>
-              That&apos;s why Signal exists.
+              We&apos;re not trying to fix hiring with more AI. We&apos;re trying to fix
+              it with more proof.
             </p>
           </article>
         )}
