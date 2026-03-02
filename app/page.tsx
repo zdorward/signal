@@ -6,18 +6,22 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { DemoVideoModal } from "@/components/demo-video-modal";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-8">
       <div className="max-w-2xl w-full space-y-12">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold tracking-tight text-foreground">
-            Signal<span className="text-primary animate-blink">_</span>
-          </h1>
-          <p className="mt-4 text-sm uppercase tracking-widest text-muted-foreground">
-            The Candidate Intelligence Platform
-          </p>
+        <div className="text-center space-y-6">
+          <div>
+            <h1 className="text-6xl font-bold tracking-tight text-foreground">
+              Signal<span className="text-primary animate-blink">_</span>
+            </h1>
+            <p className="mt-4 text-sm uppercase tracking-widest text-muted-foreground">
+              The Candidate Intelligence Platform
+            </p>
+          </div>
+          <DemoVideoModal />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
