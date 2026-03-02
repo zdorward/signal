@@ -253,17 +253,35 @@ Provide your evaluation as JSON only (no markdown):
     const responseText = content.text;
     console.log(`[evaluate-video] Claude response received in ${Date.now() - claudeStart}ms`);
 
-    // Parse response
+    // Parse response - extract JSON from anywhere in the response
     let evaluation;
     try {
       let jsonText = responseText.trim();
-      if (jsonText.startsWith('```')) {
-        jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      // Remove markdown code blocks
+      if (jsonText.includes('```')) {
+        const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (match) jsonText = match[1].trim();
+      }
+      // Try to find JSON object in the text
+      const jsonMatch = jsonText.match(/\{[\s\S]*"overall_score"[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[0];
       }
       evaluation = JSON.parse(jsonText);
     } catch (parseError) {
-      console.error('[evaluate-video] Parse error:', parseError, responseText);
-      return NextResponse.json({ error: 'Failed to parse video evaluation' }, { status: 500 });
+      console.error('[evaluate-video] Parse error:', parseError);
+      console.error('[evaluate-video] Raw response:', responseText.substring(0, 500));
+      // Fallback: create a minimal evaluation
+      evaluation = {
+        does_it_work: 1,
+        do_they_understand: 1,
+        can_they_communicate: 1,
+        overall_score: 1,
+        short_summary: 'Evaluation failed',
+        summary: 'Could not parse video evaluation response.',
+        green_flags: [],
+        red_flags: ['Automated evaluation failed'],
+      };
     }
 
     // Update evaluation with video score
