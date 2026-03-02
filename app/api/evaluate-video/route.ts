@@ -15,10 +15,12 @@ const execAsync = promisify(exec);
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  console.log('[evaluate-video] Starting video evaluation...');
+  const startTime = new Date().toISOString();
+  console.log(`[evaluate-video] === FUNCTION INVOKED at ${startTime} ===`);
 
   try {
     const { submission_id } = await request.json();
+    console.log(`[evaluate-video] Processing submission_id: ${submission_id} at ${startTime}`);
 
     if (!submission_id) {
       return NextResponse.json({ error: 'Missing submission_id' }, { status: 400 });
@@ -59,7 +61,21 @@ export async function POST(request: Request) {
 
     const bufferStart = Date.now();
     const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
-    console.log(`[evaluate-video] Video buffered in ${Date.now() - bufferStart}ms, size:`, videoBuffer.byteLength, 'bytes');
+    const videoSizeMB = videoBuffer.byteLength / (1024 * 1024);
+    console.log(`[evaluate-video] Video buffered in ${Date.now() - bufferStart}ms, size: ${videoSizeMB.toFixed(2)}MB`);
+
+    // Check file size - skip processing for videos over 150MB
+    const MAX_VIDEO_SIZE_MB = 150;
+    if (videoSizeMB > MAX_VIDEO_SIZE_MB) {
+      console.warn(`[evaluate-video] Video too large (${videoSizeMB.toFixed(2)}MB > ${MAX_VIDEO_SIZE_MB}MB), skipping automated analysis`);
+      await supabaseAdmin
+        .from('evaluations')
+        .update({
+          video_notes: `Video file too large for automated analysis (${videoSizeMB.toFixed(0)}MB). Requires human review.`,
+        })
+        .eq('submission_id', submission_id);
+      return NextResponse.json({ message: 'Video too large for automated processing' }, { status: 200 });
+    }
 
     // Check if ffmpeg is available
     try {

@@ -200,20 +200,24 @@ Evaluate each criterion and provide scores.`;
 
       // Retry up to 3 times with delay for cold start issues
       const triggerVideoEval = async (retries = 3) => {
+        console.log(`[evaluate] Starting video eval trigger to ${videoEvalUrl}/api/evaluate-video`);
         for (let i = 0; i < retries; i++) {
           try {
+            console.log(`[evaluate] Video eval attempt ${i + 1} of ${retries}...`);
             const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ submission_id }),
             });
-            console.log(`[evaluate] Video evaluation triggered, status: ${res.status}`);
+            const responseText = await res.text();
+            console.log(`[evaluate] Video evaluation triggered, status: ${res.status}, response: ${responseText.substring(0, 200)}`);
             return;
           } catch (err) {
             console.error(`[evaluate] Video eval attempt ${i + 1} failed:`, err);
             if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
           }
         }
+        console.error('[evaluate] All video eval attempts failed');
       };
       triggerVideoEval();
     }
