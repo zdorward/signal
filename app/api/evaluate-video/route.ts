@@ -61,6 +61,21 @@ export async function POST(request: Request) {
     const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
     console.log(`[evaluate-video] Video buffered in ${Date.now() - bufferStart}ms, size:`, videoBuffer.byteLength, 'bytes');
 
+    // Check if ffmpeg is available
+    try {
+      await execAsync('which ffmpeg', { timeout: 5000 });
+    } catch {
+      console.warn('[evaluate-video] ffmpeg not available, skipping video evaluation');
+      // Update evaluation to indicate video needs manual review
+      await supabaseAdmin
+        .from('evaluations')
+        .update({
+          video_notes: 'Video uploaded but automated evaluation unavailable (ffmpeg not installed). Manual review required.',
+        })
+        .eq('submission_id', submission_id);
+      return NextResponse.json({ message: 'Video evaluation skipped - ffmpeg not available' }, { status: 200 });
+    }
+
     // Create temp directory for processing
     const tempDir = join(tmpdir(), `signal-video-${submission_id}`);
     await mkdir(tempDir, { recursive: true });
@@ -80,7 +95,7 @@ export async function POST(request: Request) {
     } catch (ffmpegError) {
       console.error('[evaluate-video] ffmpeg error after', Date.now() - ffmpegStart, 'ms:', ffmpegError);
       await rm(tempDir, { recursive: true, force: true }).catch(() => {});
-      return NextResponse.json({ error: 'Failed to extract video frames. Is ffmpeg installed?' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to extract video frames' }, { status: 500 });
     }
 
     // Read extracted frames
