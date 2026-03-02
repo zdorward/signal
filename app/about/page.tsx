@@ -102,8 +102,8 @@ export default function AboutPage() {
               determines whether the candidate built something real or mocked
               something up. It scores written explanations against a rubric. It
               produces a summary of every submission. It drafts a personalized
-              rejection for every candidate who doesn&apos;t advance. The processing
-              happens before the human ever opens the dashboard.
+              rejection for every candidate who doesn&apos;t advance. The
+              processing happens before the human ever opens the dashboard.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -112,10 +112,10 @@ export default function AboutPage() {
 
             <p>
               The offer decision. Hiring has legal weight. It requires reading
-              someone&apos;s potential, not just their output. A strong demo doesn&apos;t
-              guarantee the right person. A weak demo doesn&apos;t disqualify one
-              either. That judgment belongs to a human. AI surfaces the signal,
-              the human decides what it means.
+              someone&apos;s potential, not just their output. A strong demo
+              doesn&apos;t guarantee the right person. A weak demo doesn&apos;t
+              disqualify one either. That judgment belongs to a human. AI
+              surfaces the signal, the human decides what it means.
             </p>
 
             <h2 className="text-foreground font-medium uppercase tracking-wider text-xs pt-4">
@@ -126,19 +126,20 @@ export default function AboutPage() {
               Rubric quality for specialized roles. For common roles, Signal
               generates solid evaluation criteria. For niche positions, a weak
               rubric creates false confidence. The human stops questioning the
-              shortlist. That&apos;s the failure mode. It doesn&apos;t break loudly, it
-              breaks quietly. That&apos;s where the next investment goes: getting
-              domain experts to validate rubrics before challenges go live.
+              shortlist. That&apos;s the failure mode. It doesn&apos;t break
+              loudly, it breaks quietly. That&apos;s where the next investment
+              goes: getting domain experts to validate rubrics before challenges
+              go live.
             </p>
 
             <p className="text-foreground pt-4">
-              The goal isn&apos;t to make hiring easier to automate. It&apos;s to make it
-              harder to fake.
+              The goal isn&apos;t to make hiring easier to automate. It&apos;s
+              to make it harder to fake.
             </p>
           </article>
         ) : (
           <article className="space-y-6 text-sm text-muted-foreground leading-relaxed">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+            <p className="text-xs text-foreground uppercase tracking-wider ">
               The case for proof-of-work hiring
             </p>
 
@@ -147,8 +148,8 @@ export default function AboutPage() {
             <p>
               Ten years ago, editing your resume took real effort. You picked a
               few roles you actually wanted and applied carefully. Remote work
-              wasn&apos;t everywhere. The friction meant something. It filtered out
-              people who weren&apos;t serious.
+              wasn&apos;t everywhere. The friction meant something. It filtered
+              out people who weren&apos;t serious.
             </p>
 
             <p>
@@ -161,10 +162,10 @@ export default function AboutPage() {
               There&apos;s also a skill problem. An engineer with 10 years of
               experience at some legacy company might be far less useful than a
               new grad who&apos;s been building with modern AI tools. The resume
-              doesn&apos;t tell you that. The interview doesn&apos;t either. Leetcode
-              definitely doesn&apos;t. We&apos;re testing people on things AI can do in
-              seconds, trying to infer whether they can handle problems that
-              didn&apos;t exist when the test was designed.
+              doesn&apos;t tell you that. The interview doesn&apos;t either.
+              Leetcode definitely doesn&apos;t. We&apos;re testing people on
+              things AI can do in seconds, trying to infer whether they can
+              handle problems that didn&apos;t exist when the test was designed.
             </p>
 
             <p className="text-foreground font-medium">
@@ -172,9 +173,9 @@ export default function AboutPage() {
             </p>
 
             <p>
-              You can fake a resume. You can&apos;t fake a working product. You can
-              memorize interview answers. You can&apos;t memorize your way to a
-              deployed system. The demo doesn&apos;t lie.
+              You can fake a resume. You can&apos;t fake a working product. You
+              can memorize interview answers. You can&apos;t memorize your way
+              to a deployed system. The demo doesn&apos;t lie.
             </p>
 
             <p>
@@ -191,8 +192,8 @@ export default function AboutPage() {
             </p>
 
             <p className="text-foreground">
-              We&apos;re not trying to fix hiring with more AI. We&apos;re trying to fix
-              it with more proof.
+              We&apos;re not trying to fix hiring with more AI. We&apos;re
+              trying to fix it with more proof.
             </p>
           </article>
         )}
