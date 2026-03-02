@@ -451,7 +451,7 @@ export default function DashboardPage() {
                     return (
                       <TableRow
                         key={submission.id}
-                        className="cursor-pointer"
+                        className={`cursor-pointer ${isEvaluating ? 'border-l-2 border-l-warning' : ''}`}
                         onClick={() =>
                           setExpandedId(
                             expandedId === submission.id ? null : submission.id,
@@ -464,14 +464,7 @@ export default function DashboardPage() {
                             : "-"}
                         </TableCell>
                         <TableCell className="font-medium text-foreground">
-                          <div className="flex items-center gap-2">
-                            {submission.candidate_name}
-                            {isEvaluating && (
-                              <span className="text-warning text-sm">
-                                Evaluating<span className="animate-blink">_</span>
-                              </span>
-                            )}
-                          </div>
+                          {submission.candidate_name}
                         </TableCell>
                         <TableCell>
                           {avgScore !== null ? (
