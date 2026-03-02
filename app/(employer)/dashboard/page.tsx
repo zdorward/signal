@@ -443,15 +443,10 @@ export default function DashboardPage() {
                         )
                       : null;
 
-                    // Determine if still evaluating
-                    const textEvalComplete = submission.evaluation !== null;
-                    const videoEvalComplete = !submission.video_path || submission.evaluation?.video_score != null;
-                    const isEvaluating = !textEvalComplete || !videoEvalComplete;
-
                     return (
                       <TableRow
                         key={submission.id}
-                        className={`cursor-pointer ${isEvaluating ? 'border-l-2 border-l-warning' : ''}`}
+                        className="cursor-pointer"
                         onClick={() =>
                           setExpandedId(
                             expandedId === submission.id ? null : submission.id,
@@ -474,7 +469,7 @@ export default function DashboardPage() {
                               <span className="text-destructive">FAIL</span>
                             )
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
                           )}
                         </TableCell>
                         <TableCell>
@@ -485,7 +480,7 @@ export default function DashboardPage() {
                               <span className="text-destructive">FAIL</span>
                             )
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
                           )}
                         </TableCell>
                         <TableCell>
@@ -501,6 +496,8 @@ export default function DashboardPage() {
                             >
                               {submission.evaluation.video_score}/10
                             </Badge>
+                          ) : submission.video_path ? (
+                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
@@ -513,9 +510,9 @@ export default function DashboardPage() {
                             const bothPass = qPass && urlPass;
                             const videoScore = submission.evaluation?.video_score;
 
-                            // Still evaluating - show dash
+                            // Still evaluating text - show dot
                             if (!submission.evaluation) {
-                              return <span className="text-muted-foreground">-</span>;
+                              return <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />;
                             }
 
                             if (!bothPass) {
@@ -524,7 +521,7 @@ export default function DashboardPage() {
 
                             if (videoScore == null) {
                               return submission.video_path ? (
-                                <span className="text-muted-foreground">-</span>
+                                <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
                               ) : (
                                 <Badge variant="warning">◇ Maybe</Badge>
                               );
@@ -546,9 +543,13 @@ export default function DashboardPage() {
                           })()}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                          {submission.evaluation?.video_notes
-                            ? submission.evaluation.video_notes.split("\n\n")[0]
-                            : "-"}
+                          {submission.evaluation?.video_notes ? (
+                            submission.evaluation.video_notes.split("\n\n")[0]
+                          ) : submission.video_path ? (
+                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                          ) : (
+                            "-"
+                          )}
                         </TableCell>
                       </TableRow>
                     );
