@@ -192,11 +192,25 @@ Evaluate each criterion and provide scores.`;
       const videoEvalUrl = process.env.VIDEO_EVAL_URL
         || `https://${request.headers.get('host') || 'localhost:3000'}`;
       console.log('[evaluate] Video eval URL:', videoEvalUrl);
-      fetch(`${videoEvalUrl}/api/evaluate-video`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submission_id }),
-      }).catch((err) => console.error('[evaluate] Video evaluation trigger failed:', err));
+
+      // Retry up to 3 times with delay for cold start issues
+      const triggerVideoEval = async (retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ submission_id }),
+            });
+            console.log(`[evaluate] Video evaluation triggered, status: ${res.status}`);
+            return;
+          } catch (err) {
+            console.error(`[evaluate] Video eval attempt ${i + 1} failed:`, err);
+            if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
+          }
+        }
+      };
+      triggerVideoEval();
     }
 
     return NextResponse.json(evalData, { status: 201 });
