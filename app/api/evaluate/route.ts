@@ -198,32 +198,29 @@ Evaluate each criterion and provide scores.`;
         || `https://${request.headers.get('host') || 'localhost:3000'}`;
       console.log('[evaluate] Video eval URL:', videoEvalUrl);
 
-      // Fire-and-forget with timeout - don't wait for Railway to finish processing
-      const triggerVideoEval = async () => {
-        // Small delay to ensure submission is committed to database
-        await new Promise(r => setTimeout(r, 1000));
-        console.log(`[evaluate] Triggering video eval at ${videoEvalUrl}/api/evaluate-video`);
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      // Trigger video eval - wait up to 3s to ensure request reaches Railway
+      console.log(`[evaluate] Triggering video eval at ${videoEvalUrl}/api/evaluate-video`);
+      const videoEvalStart = Date.now();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-          const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ submission_id }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          console.log(`[evaluate] Video eval request sent, status: ${res.status}`);
-        } catch (err) {
-          if (err instanceof Error && err.name === 'AbortError') {
-            console.log('[evaluate] Video eval request timed out (expected - Railway processing in background)');
-          } else {
-            console.error('[evaluate] Video eval trigger failed:', err);
-          }
+        const res = await fetch(`${videoEvalUrl}/api/evaluate-video`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submission_id }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        console.log(`[evaluate] Video eval responded in ${Date.now() - videoEvalStart}ms, status: ${res.status}`);
+      } catch (err) {
+        // AbortError is expected - Railway takes longer than 3s to process
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log(`[evaluate] Video eval request sent after ${Date.now() - videoEvalStart}ms (processing continues on Railway)`);
+        } else {
+          console.error(`[evaluate] Video eval trigger error after ${Date.now() - videoEvalStart}ms:`, err);
         }
-      };
-      triggerVideoEval();
+      }
     }
 
     return NextResponse.json(evalData, { status: 201 });
