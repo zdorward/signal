@@ -5,6 +5,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('company_settings')
     .select('*')
+    .limit(1)
     .single();
 
   if (error) {
@@ -26,22 +27,48 @@ export async function PUT(request: Request) {
   const body = await request.json();
   const { company_name, mission, benefits } = body;
 
-  // Upsert settings
-  const { data, error } = await supabaseAdmin
+  // First, get the existing row (or create one if none exists)
+  const { data: existing } = await supabaseAdmin
     .from('company_settings')
-    .upsert({
-      id: body.id || undefined,
-      company_name: company_name || 'Company',
-      mission: mission || null,
-      benefits: benefits || null,
-      updated_at: new Date().toISOString(),
-    })
-    .select()
+    .select('id')
+    .limit(1)
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (existing?.id) {
+    // Update existing row
+    const { data, error } = await supabaseAdmin
+      .from('company_settings')
+      .update({
+        company_name: company_name || 'Company',
+        mission: mission || null,
+        benefits: benefits || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+      .select()
+      .single();
 
-  return NextResponse.json(data);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } else {
+    // Insert new row
+    const { data, error } = await supabaseAdmin
+      .from('company_settings')
+      .insert({
+        company_name: company_name || 'Company',
+        mission: mission || null,
+        benefits: benefits || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  }
 }

@@ -167,11 +167,11 @@ Evaluate each criterion and provide scores.`;
       .from('evaluations')
       .insert({
         submission_id,
-        criterion_scores_json: evaluation.criterion_scores,
+        criterion_scores_json: evaluation.criterion_scores || [],
         url_passed: urlPassed,
         url_notes: urlNotes,
-        summary_bullets: evaluation.summary_bullets,
-        worth_human_attention: evaluation.worth_human_attention,
+        summary_bullets: evaluation.summary_bullets || ['Evaluation completed'],
+        worth_human_attention: evaluation.worth_human_attention ?? false,
         flag_reason: evaluation.flag_reason || null,
         rejection_draft: evaluation.rejection_draft || null,
       })
@@ -179,7 +179,20 @@ Evaluate each criterion and provide scores.`;
       .single();
 
     if (evalError) {
-      return NextResponse.json({ error: 'Failed to save evaluation' }, { status: 500 });
+      console.error('[evaluate] Save error:', evalError);
+      return NextResponse.json({ error: evalError.message }, { status: 500 });
+    }
+
+    console.log('[evaluate] Evaluation saved successfully:', evalData.id);
+
+    // Fire-and-forget: trigger video evaluation if video exists
+    if (typedSubmission.video_path) {
+      console.log('[evaluate] Triggering video evaluation...');
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/evaluate-video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submission_id }),
+      }).catch((err) => console.error('[evaluate] Video evaluation trigger failed:', err));
     }
 
     return NextResponse.json(evalData, { status: 201 });

@@ -31,6 +31,8 @@ export default function CreateChallengePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [savedChallengeId, setSavedChallengeId] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -39,6 +41,7 @@ export default function CreateChallengePage() {
     setChallengeText("");
     setQuestions([]);
     setSavedChallengeId(null);
+    setHasGenerated(false);
     setError("");
 
     try {
@@ -65,7 +68,6 @@ export default function CreateChallengePage() {
         const chunk = decoder.decode(value);
         fullText += chunk;
 
-        // Show content up to first delimiter during streaming
         const challengeDelim = fullText.indexOf("---CHALLENGE---");
         const questionsDelim = fullText.indexOf("---QUESTIONS---");
         if (questionsDelim !== -1) {
@@ -77,7 +79,6 @@ export default function CreateChallengePage() {
         }
       }
 
-      // Parse: intro ---CHALLENGE--- challenge_text ---QUESTIONS--- questions_json
       const challengeDelimiter = "---CHALLENGE---";
       const questionsDelimiter = "---QUESTIONS---";
 
@@ -106,6 +107,7 @@ export default function CreateChallengePage() {
       setIntroText(introPart);
       setChallengeText(challengePart);
       setQuestions(parsedQuestions);
+      setHasGenerated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
@@ -215,10 +217,10 @@ export default function CreateChallengePage() {
   const copyLink = () => {
     if (shareableLink) {
       navigator.clipboard.writeText(shareableLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  const hasGenerated = introText && challengeText && questions.length > 0;
 
   if (savedChallengeId && shareableLink) {
     return (
@@ -228,22 +230,22 @@ export default function CreateChallengePage() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center space-y-6"
         >
-          <div className="text-6xl">✓</div>
-          <h1 className="text-3xl font-bold text-green-600">
-            Job Posted!
+          <div className="text-6xl text-primary">◆</div>
+          <h1 className="text-3xl font-bold text-primary uppercase tracking-wider">
+            Job Posted
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground">
             Share this link with candidates:
           </p>
 
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <code className="flex-1 bg-gray-100 px-4 py-3 rounded-lg text-sm font-mono break-all">
+                <code className="flex-1 bg-secondary border border-border px-4 py-3 text-sm font-mono break-all text-foreground">
                   {shareableLink}
                 </code>
-                <Button onClick={copyLink} variant="outline">
-                  Copy
+                <Button onClick={copyLink} variant={copied ? "primary" : "outline"}>
+                  {copied ? "Copied!" : "Copy"}
                 </Button>
               </div>
             </CardContent>
@@ -262,11 +264,12 @@ export default function CreateChallengePage() {
                 setChallengeRequirements("");
                 setDeadline("");
                 setStreamedContent("");
+                setHasGenerated(false);
               }}
             >
               Create Another
             </Button>
-            <Button onClick={() => (window.location.href = "/dashboard")}>
+            <Button variant="primary" onClick={() => (window.location.href = "/dashboard")}>
               View Dashboard
             </Button>
           </div>
@@ -278,8 +281,8 @@ export default function CreateChallengePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Create Job</h1>
-        <p className="text-gray-600">
+        <h1 className="text-xl font-bold text-foreground uppercase tracking-wider">Create Job</h1>
+        <p className="text-muted-foreground text-sm">
           Describe the role and let AI generate evaluation questions.
         </p>
       </div>
@@ -287,7 +290,7 @@ export default function CreateChallengePage() {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Job Title</label>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">Job Title</label>
             <Input
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
@@ -296,7 +299,7 @@ export default function CreateChallengePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
               Role Description
             </label>
             <Textarea
@@ -308,9 +311,9 @@ export default function CreateChallengePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
               Project Requirements{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              <span className="text-muted-foreground font-normal lowercase">(optional)</span>
             </label>
             <Textarea
               value={challengeRequirements}
@@ -321,9 +324,9 @@ export default function CreateChallengePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
               Application Deadline{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              <span className="text-muted-foreground font-normal lowercase">(optional)</span>
             </label>
             <Input
               type="datetime-local"
@@ -336,14 +339,21 @@ export default function CreateChallengePage() {
             onClick={handleGenerate}
             disabled={!jobTitle.trim() || isGenerating}
             size="lg"
+            variant="primary"
           >
-            {isGenerating ? "Generating..." : "Generate Application"}
+            {isGenerating ? (
+              <>
+                Generating<span className="animate-blink">_</span>
+              </>
+            ) : (
+              "Generate Application"
+            )}
           </Button>
         </CardContent>
       </Card>
 
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg">{error}</div>
+        <div className="border border-destructive text-destructive p-4">{error}</div>
       )}
 
       <AnimatePresence mode="wait">
@@ -356,14 +366,13 @@ export default function CreateChallengePage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Generating Questions...
+                <CardTitle className="flex items-center gap-2 text-warning">
+                  Generating<span className="animate-blink">_</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <pre className="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-4 rounded overflow-auto max-h-96">
-                  {streamedContent || "Starting generation..."}
+                <pre className="whitespace-pre-wrap text-sm font-mono bg-secondary border border-border p-4 overflow-auto max-h-96 text-foreground">
+                  {streamedContent || "Initializing..."}
                 </pre>
               </CardContent>
             </Card>
@@ -379,8 +388,8 @@ export default function CreateChallengePage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Introduction</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Introduction</CardTitle>
+                <CardDescription className="text-foreground">
                   Brief intro that appears at the top of the application.
                 </CardDescription>
               </CardHeader>
@@ -395,8 +404,8 @@ export default function CreateChallengePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Project</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Project</CardTitle>
+                <CardDescription className="text-foreground">
                   The project candidates must build. Supports markdown.
                 </CardDescription>
               </CardHeader>
@@ -412,8 +421,8 @@ export default function CreateChallengePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Supplementary Questions</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Supplementary Questions</CardTitle>
+                <CardDescription className="text-foreground">
                   Additional questions alongside the challenge. Each criterion
                   is scored 1-5.
                 </CardDescription>
@@ -425,10 +434,10 @@ export default function CreateChallengePage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: qIndex * 0.1 }}
-                    className="border rounded-lg p-4 space-y-4"
+                    className="border border-border p-4 space-y-4"
                   >
                     <div className="flex items-start gap-4">
-                      <span className="text-lg font-bold text-gray-400">
+                      <span className="text-lg font-bold text-muted-foreground">
                         Q{qIndex + 1}
                       </span>
                       <div className="flex-1 space-y-2">
@@ -443,7 +452,7 @@ export default function CreateChallengePage() {
                           rows={2}
                         />
                         <div className="flex items-center gap-4">
-                          <label className="text-sm text-gray-500">
+                          <label className="text-sm text-muted-foreground">
                             Word limit:
                             <Input
                               type="number"
@@ -459,7 +468,7 @@ export default function CreateChallengePage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500"
+                            className="text-destructive"
                             onClick={() => removeQuestion(question.id)}
                           >
                             Remove Question
@@ -469,7 +478,7 @@ export default function CreateChallengePage() {
                     </div>
 
                     <div className="ml-8 space-y-2">
-                      <p className="text-sm font-medium text-gray-700">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground">
                         Evaluation Criteria:
                       </p>
                       {question.criteria.map((criterion, cIndex) => (
@@ -477,7 +486,7 @@ export default function CreateChallengePage() {
                           key={criterion.id}
                           className="flex items-center gap-2"
                         >
-                          <span className="text-sm text-gray-400 w-6">
+                          <span className="text-sm text-muted-foreground w-6">
                             {cIndex + 1}.
                           </span>
                           <Input
@@ -493,7 +502,7 @@ export default function CreateChallengePage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500"
+                            className="text-destructive"
                             onClick={() =>
                               removeCriterion(question.id, criterion.id)
                             }
@@ -521,8 +530,14 @@ export default function CreateChallengePage() {
             </Card>
 
             <div className="flex gap-4">
-              <Button onClick={handleSave} disabled={isSaving} size="lg">
-                {isSaving ? "Publishing..." : "Publish Job"}
+              <Button onClick={handleSave} disabled={isSaving} size="lg" variant="primary">
+                {isSaving ? (
+                  <>
+                    Publishing<span className="animate-blink">_</span>
+                  </>
+                ) : (
+                  "Publish Job"
+                )}
               </Button>
               <Button
                 variant="outline"

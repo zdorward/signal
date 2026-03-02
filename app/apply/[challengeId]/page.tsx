@@ -177,24 +177,26 @@ export default function ApplyPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-warning">
+          Loading<span className="animate-blink">_</span>
+        </div>
       </main>
     );
   }
 
   if (notFound) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+      <main className="min-h-screen bg-background flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-foreground uppercase tracking-wider mb-2">
             Application Not Found
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             This application link is invalid or has expired.
           </p>
         </motion.div>
@@ -204,16 +206,16 @@ export default function ApplyPage() {
 
   if (error && !challenge) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+      <main className="min-h-screen bg-background flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Something went wrong
+          <h1 className="text-2xl font-bold text-foreground uppercase tracking-wider mb-2">
+            Error
           </h1>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </motion.div>
       </main>
@@ -222,7 +224,7 @@ export default function ApplyPage() {
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+      <main className="min-h-screen bg-background flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -232,26 +234,14 @@ export default function ApplyPage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: 'spring', stiffness: 400 }}
-            className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="text-6xl text-primary mb-6"
           >
-            <svg
-              className="w-10 h-10 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            ◆
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">
-            Your application is in.
+          <h1 className="text-3xl font-bold text-foreground uppercase tracking-wider mb-3">
+            Application Submitted
           </h1>
-          <p className="text-lg text-gray-600">We&apos;ll be in touch.</p>
+          <p className="text-muted-foreground">We&apos;ll be in touch.</p>
         </motion.div>
       </main>
     );
@@ -260,16 +250,16 @@ export default function ApplyPage() {
   const companyName = companySettings?.company_name || 'Company';
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <p className="text-sm text-gray-500 mb-1">{companyName}</p>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{companyName}</p>
+          <h1 className="text-2xl font-bold text-foreground">
             {challenge?.role_description}
           </h1>
           {challenge?.deadline && (
-            <p className={`text-sm mt-2 ${deadlinePassed ? 'text-red-600' : 'text-gray-500'}`}>
+            <p className={`text-sm mt-2 ${deadlinePassed ? 'text-destructive' : 'text-muted-foreground'}`}>
               {deadlinePassed ? 'Applications closed' : `Apply by ${formatDeadline(challenge.deadline)}`}
             </p>
           )}
@@ -277,25 +267,25 @@ export default function ApplyPage() {
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4">
           <nav className="flex gap-8">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`py-4 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-4 border-b-2 text-sm uppercase tracking-wider transition-colors ${
                 activeTab === 'overview'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('application')}
-              className={`py-4 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-4 border-b-2 text-sm uppercase tracking-wider transition-colors ${
                 activeTab === 'application'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               Application
@@ -318,10 +308,10 @@ export default function ApplyPage() {
               {/* Company Mission */}
               {companySettings?.mission && (
                 <section>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
                     About {companyName}
                   </h2>
-                  <p className="text-gray-600 whitespace-pre-wrap">
+                  <p className="text-foreground whitespace-pre-wrap">
                     {companySettings.mission}
                   </p>
                 </section>
@@ -330,10 +320,10 @@ export default function ApplyPage() {
               {/* Role Intro */}
               {challenge?.intro_text && (
                 <section>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
                     About the Role
                   </h2>
-                  <p className="text-gray-600 whitespace-pre-wrap">
+                  <p className="text-foreground whitespace-pre-wrap">
                     {challenge.intro_text}
                   </p>
                 </section>
@@ -342,12 +332,12 @@ export default function ApplyPage() {
               {/* Project Challenge */}
               {challenge?.challenge_text && (
                 <section>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
                     The Project
                   </h2>
-                  <Card className="bg-white">
+                  <Card>
                     <CardContent className="p-6">
-                      <div className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-700">
+                      <div className="whitespace-pre-wrap text-foreground">
                         {challenge.challenge_text}
                       </div>
                     </CardContent>
@@ -358,10 +348,10 @@ export default function ApplyPage() {
               {/* Benefits */}
               {companySettings?.benefits && (
                 <section>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
                     Benefits
                   </h2>
-                  <p className="text-gray-600 whitespace-pre-wrap">
+                  <p className="text-foreground whitespace-pre-wrap">
                     {companySettings.benefits}
                   </p>
                 </section>
@@ -371,7 +361,8 @@ export default function ApplyPage() {
               <div className="pt-4">
                 <Button
                   size="lg"
-                  onClick={() => setActiveTab('application')}
+                  variant="primary"
+                  onClick={() => { setActiveTab('application'); window.scrollTo(0, 0); }}
                   disabled={!!deadlinePassed}
                 >
                   {deadlinePassed ? 'Applications Closed' : 'Apply Now'}
@@ -386,24 +377,24 @@ export default function ApplyPage() {
               exit={{ opacity: 0, y: -10 }}
             >
               {deadlinePassed ? (
-                <Card className="bg-white">
+                <Card>
                   <CardContent className="p-8 text-center">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h2 className="text-xl font-semibold text-foreground uppercase tracking-wider mb-2">
                       Applications Closed
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       The deadline for this position has passed.
                     </p>
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="bg-white">
+                <Card>
                   <CardContent className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid gap-6 md:grid-cols-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-900 mb-2">
-                            Full Name <span className="text-red-500">*</span>
+                          <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            Full Name <span className="text-destructive">*</span>
                           </label>
                           <Input
                             value={fullName}
@@ -413,8 +404,8 @@ export default function ApplyPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-900 mb-2">
-                            Email <span className="text-red-500">*</span>
+                          <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            Email <span className="text-destructive">*</span>
                           </label>
                           <Input
                             type="email"
@@ -428,8 +419,8 @@ export default function ApplyPage() {
 
                       {questions.map((question, index) => (
                         <div key={question.id}>
-                          <label className="block text-sm font-medium text-gray-900 mb-2">
-                            {question.text} <span className="text-red-500">*</span>
+                          <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            {question.text} <span className="text-destructive">*</span>
                           </label>
                           <Textarea
                             value={answers[question.id] || ''}
@@ -444,15 +435,15 @@ export default function ApplyPage() {
                             required
                             className={
                               isOverLimit(question)
-                                ? 'border-red-500 focus-visible:ring-red-500'
+                                ? 'border-destructive'
                                 : ''
                             }
                           />
                           <div
-                            className={`text-sm mt-2 flex justify-end ${
+                            className={`text-xs mt-2 flex justify-end uppercase tracking-wider ${
                               isOverLimit(question)
-                                ? 'text-red-500 font-medium'
-                                : 'text-gray-500'
+                                ? 'text-destructive'
+                                : 'text-muted-foreground'
                             }`}
                           >
                             {getWordCount(question.id)} / {getWordLimit(question)} words
@@ -461,10 +452,10 @@ export default function ApplyPage() {
                       ))}
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
-                          Link to your submission <span className="text-red-500">*</span>
+                        <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                          Link to your submission <span className="text-destructive">*</span>
                         </label>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           Link to your working demo, portfolio, or project
                         </p>
                         <Input
@@ -477,11 +468,11 @@ export default function ApplyPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                        <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
                           Video Walkthrough{' '}
-                          <span className="text-gray-400">(optional)</span>
+                          <span className="text-muted-foreground lowercase">(optional)</span>
                         </label>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           MP4, WebM, or MOV. Max 512MB.
                         </p>
                         <Input
@@ -490,7 +481,7 @@ export default function ApplyPage() {
                           onChange={handleVideoChange}
                         />
                         {videoFileName && (
-                          <p className="text-sm text-green-600 mt-2">
+                          <p className="text-sm text-primary mt-2">
                             Selected: {videoFileName}
                           </p>
                         )}
@@ -500,7 +491,7 @@ export default function ApplyPage() {
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-red-50 text-red-700 p-4 rounded-lg text-sm"
+                          className="border border-destructive text-destructive p-4 text-sm"
                         >
                           {error}
                         </motion.div>
@@ -510,13 +501,16 @@ export default function ApplyPage() {
                         type="submit"
                         className="w-full"
                         size="lg"
+                        variant="primary"
                         disabled={isSubmitting || anyOverLimit}
                       >
-                        {isUploading
-                          ? 'Uploading video...'
-                          : isSubmitting
-                          ? 'Submitting...'
-                          : 'Submit Application'}
+                        {isUploading ? (
+                          <>Uploading video<span className="animate-blink">_</span></>
+                        ) : isSubmitting ? (
+                          <>Submitting<span className="animate-blink">_</span></>
+                        ) : (
+                          'Submit Application'
+                        )}
                       </Button>
                     </form>
                   </CardContent>

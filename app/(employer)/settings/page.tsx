@@ -68,28 +68,33 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <span className="text-warning">Loading</span>
+        <span className="animate-blink text-warning">_</span>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Company Settings</h1>
-        <p className="text-gray-600">
+        <h1 className="text-xl font-bold text-foreground uppercase tracking-wider">Company Settings</h1>
+        <p className="text-muted-foreground text-sm">
           Configure your company information that appears on job postings.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Company Information</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Company Information</CardTitle>
+          <CardDescription className="text-foreground">
             This information appears on all job postings.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Company Name</label>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">Company Name</label>
             <Input
               value={settings.company_name}
               onChange={(e) =>
@@ -100,7 +105,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Mission Statement</label>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">Mission Statement</label>
             <Textarea
               value={settings.mission || ''}
               onChange={(e) =>
@@ -112,7 +117,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Benefits</label>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">Benefits</label>
             <Textarea
               value={settings.benefits || ''}
               onChange={(e) =>
@@ -124,10 +129,16 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Settings'}
+            <Button onClick={handleSave} disabled={saving} variant="primary">
+              {saving ? (
+                <>
+                  Saving<span className="animate-blink">_</span>
+                </>
+              ) : (
+                'Save Settings'
+              )}
             </Button>
-            {saved && <span className="text-green-600 text-sm">Saved!</span>}
+            {saved && <span className="text-primary text-sm uppercase tracking-wider">◆ Saved</span>}
           </div>
         </CardContent>
       </Card>

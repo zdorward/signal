@@ -59,6 +59,8 @@ export interface Evaluation {
   criterion_scores_json: CriterionScore[];
   url_passed: boolean;
   url_notes: string;
+  video_score: number | null;
+  video_notes: string | null;
   summary_bullets: string[];
   worth_human_attention: boolean;
   flag_reason: string | null;

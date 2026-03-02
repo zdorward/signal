@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
   Challenge,
   SubmissionWithEvaluation,
@@ -24,7 +30,7 @@ import type {
 function calculateAverageScore(scores: CriterionScore[]): number {
   if (!scores || scores.length === 0) return 0;
   const sum = scores.reduce((acc, s) => acc + s.score, 0);
-  return Math.round((sum / scores.length) * 10) / 10;
+  return Math.round((sum / scores.length) * 2);
 }
 
 function getJobNumber(id: string): string {
@@ -155,37 +161,62 @@ export default function DashboardPage() {
     }
   };
 
-  // Sort submissions: needs review first, then by score descending
-  const sortedSubmissions = [...submissions].sort((a, b) => {
-    const aReview = a.evaluation?.worth_human_attention ? 1 : 0;
-    const bReview = b.evaluation?.worth_human_attention ? 1 : 0;
-    if (bReview !== aReview) return bReview - aReview;
+  const questionsPass = (submission: SubmissionWithEvaluation) => {
+    if (!submission.evaluation?.criterion_scores_json) return false;
+    const score = calculateAverageScore(
+      submission.evaluation.criterion_scores_json as CriterionScore[],
+    );
+    return score >= 6;
+  };
 
-    const aScore = a.evaluation
-      ? calculateAverageScore(
-          a.evaluation.criterion_scores_json as CriterionScore[],
-        )
-      : 0;
-    const bScore = b.evaluation
-      ? calculateAverageScore(
-          b.evaluation.criterion_scores_json as CriterionScore[],
-        )
-      : 0;
-    return bScore - aScore;
+  const sortedSubmissions = [...submissions].sort((a, b) => {
+    const aQuestionsPass = questionsPass(a);
+    const bQuestionsPass = questionsPass(b);
+    const aUrlPass = a.evaluation?.url_passed ?? false;
+    const bUrlPass = b.evaluation?.url_passed ?? false;
+    const aBothPass = aQuestionsPass && aUrlPass;
+    const bBothPass = bQuestionsPass && bUrlPass;
+
+    if (bBothPass !== aBothPass) return bBothPass ? 1 : -1;
+
+    const aVideoScore = a.evaluation?.video_score ?? -1;
+    const bVideoScore = b.evaluation?.video_score ?? -1;
+    return bVideoScore - aVideoScore;
   });
 
+  const pendingReviewCount = submissions.filter((s) => {
+    const qPass = questionsPass(s);
+    const urlPass = s.evaluation?.url_passed ?? false;
+    return qPass && urlPass;
+  }).length;
+
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <span className="text-warning">Loading</span>
+        <span className="animate-blink text-warning">_</span>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
+      {/* Submission Count Hero */}
+      {submissions.length > 0 && (
+        <div className="text-center py-8 border border-border">
+          <div className="text-7xl font-bold text-foreground">{pendingReviewCount}</div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
+            Submissions Pending Review
+          </div>
+        </div>
+      )}
+
       {/* Positions Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold">Open Positions</h1>
-            <p className="text-gray-600">
+            <h1 className="text-xl font-bold text-foreground uppercase tracking-wider">Open Positions</h1>
+            <p className="text-muted-foreground text-sm">
               Manage your job postings and application links.
             </p>
           </div>
@@ -196,9 +227,9 @@ export default function DashboardPage() {
 
         {challenges.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-gray-500">
+            <CardContent className="py-8 text-center text-muted-foreground">
               No positions yet.{" "}
-              <a href="/create" className="text-blue-600 hover:underline">
+              <a href="/create" className="text-primary hover:underline">
                 Create your first position
               </a>
               .
@@ -210,17 +241,19 @@ export default function DashboardPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-24">Job #</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead className="w-32">Created</TableHead>
-                  <TableHead className="w-48 text-right">Actions</TableHead>
+                  <TableHead className="w-48">Position</TableHead>
+                  <TableHead>Application Link</TableHead>
+                  <TableHead className="w-28">Created</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {challenges.map((challenge) => (
-                  <>
+                {challenges.map((challenge) => {
+                  const applyLink = `${typeof window !== "undefined" ? window.location.origin : ""}/apply/${challenge.id}`;
+                  return (
+                  <React.Fragment key={challenge.id}>
                     <TableRow
-                      key={challenge.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer"
                       onClick={() =>
                         setExpandedChallengeId(
                           expandedChallengeId === challenge.id
@@ -229,54 +262,69 @@ export default function DashboardPage() {
                         )
                       }
                     >
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="font-mono text-sm text-foreground">
                         {getJobNumber(challenge.id)}
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-foreground">
                         {challenge.role_description}
                       </TableCell>
-                      <TableCell className="text-gray-500">
-                        {new Date(challenge.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                      <TableCell>
+                        <div
+                          className="group relative cursor-pointer"
                           onClick={(e) => copyApplyLink(e, challenge.id)}
                         >
-                          {copiedId === challenge.id ? "Copied!" : "Copy Link"}
-                        </Button>
+                          <span className="text-muted-foreground text-sm truncate block group-hover:opacity-0 transition-opacity">
+                            {applyLink.replace(/^https?:\/\//, "")}
+                          </span>
+                          <span className="absolute inset-0 flex items-center text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="flex-1 border-t border-primary"></span>
+                            <span className="px-2">{copiedId === challenge.id ? "Copied!" : "Click to copy"}</span>
+                            <span className="flex-1 border-t border-primary"></span>
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(challenge.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={(e) => deleteChallenge(e, challenge.id)}
                           disabled={deletingId === challenge.id}
+                          title="Delete position"
                         >
-                          {deletingId === challenge.id ? "..." : "Delete"}
+                          {deletingId === challenge.id ? (
+                            <span className="animate-blink">_</span>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>
                     {expandedChallengeId === challenge.id && (
                       <TableRow>
-                        <TableCell colSpan={4} className="bg-gray-50 p-0">
+                        <TableCell colSpan={5} className="bg-secondary p-0">
                           <div className="p-6 space-y-4">
                             {challenge.intro_text && (
                               <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                                <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                                   Introduction
                                 </h4>
-                                <p className="text-gray-700">
+                                <p className="text-foreground">
                                   {challenge.intro_text}
                                 </p>
                               </div>
                             )}
                             {challenge.challenge_text && (
                               <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                                <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                                   Project
                                 </h4>
-                                <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                                <div className="text-foreground whitespace-pre-wrap">
                                   {challenge.challenge_text}
                                 </div>
                               </div>
@@ -284,15 +332,15 @@ export default function DashboardPage() {
                             {challenge.questions_json &&
                               challenge.questions_json.length > 0 && (
                                 <div>
-                                  <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                  <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
                                     Questions
                                   </h4>
                                   <ul className="space-y-2">
                                     {(
                                       challenge.questions_json as Question[]
                                     ).map((q, i) => (
-                                      <li key={q.id} className="text-gray-700">
-                                        <span className="font-medium">
+                                      <li key={q.id} className="text-foreground">
+                                        <span className="text-muted-foreground">
                                           Q{i + 1}:
                                         </span>{" "}
                                         {q.text}
@@ -305,8 +353,8 @@ export default function DashboardPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
-                ))}
+                  </React.Fragment>
+                );})}
               </TableBody>
             </Table>
           </Card>
@@ -317,117 +365,207 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold">Applications</h2>
-            <p className="text-gray-600">
+            <h2 className="text-xl font-bold text-foreground uppercase tracking-wider">Applications</h2>
+            <p className="text-muted-foreground text-sm">
               Review candidate submissions and AI evaluations.
             </p>
           </div>
           {submissions.length > 0 && (
             <Button variant="outline" size="sm" onClick={clearAllSubmissions}>
-              Clear All (Testing)
+              Clear All
             </Button>
           )}
         </div>
 
         {submissions.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-gray-500">
+            <CardContent className="py-8 text-center text-muted-foreground">
               No applications yet. Share position links with candidates to get
               started.
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Job #</TableHead>
-                  <TableHead>Candidate</TableHead>
-                  <TableHead className="w-28">Questions</TableHead>
-                  <TableHead className="w-20">URL</TableHead>
-                  <TableHead className="w-28">Review</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedSubmissions.map((submission) => {
-                  const avgScore = submission.evaluation
-                    ? calculateAverageScore(
-                        submission.evaluation
-                          .criterion_scores_json as CriterionScore[],
-                      )
-                    : null;
-
-                  return (
-                    <TableRow
-                      key={submission.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() =>
-                        setExpandedId(
-                          expandedId === submission.id ? null : submission.id,
+          <TooltipProvider>
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-24">
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Job #</TooltipTrigger>
+                        <TooltipContent>Unique identifier for the position</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead>
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Candidate</TooltipTrigger>
+                        <TooltipContent>Candidate name</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-28">
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Questions</TooltipTrigger>
+                        <TooltipContent>Pass/fail based on written responses (≥6/10 to pass)</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-20">
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">URL</TooltipTrigger>
+                        <TooltipContent>Whether the demo URL resolves and is relevant</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-28">
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Video Score</TooltipTrigger>
+                        <TooltipContent>AI evaluation of video demo (1-10)</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-36">
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Worth a Look?</TooltipTrigger>
+                        <TooltipContent>Yes (8+), Maybe (5-7), No (&lt;5) based on video score</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead>
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-help">Video Summary</TooltipTrigger>
+                        <TooltipContent>One-line summary from video evaluation</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedSubmissions.map((submission) => {
+                    const avgScore = submission.evaluation
+                      ? calculateAverageScore(
+                          submission.evaluation
+                            .criterion_scores_json as CriterionScore[],
                         )
-                      }
-                    >
-                      <TableCell className="font-mono text-sm">
-                        {submission.challenge
-                          ? getJobNumber(submission.challenge.id)
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {submission.candidate_name}
-                      </TableCell>
-                      <TableCell>
-                        {avgScore !== null ? (
-                          <Badge
-                            variant={
-                              avgScore >= 4
-                                ? "default"
-                                : avgScore >= 3
-                                  ? "secondary"
-                                  : "destructive"
-                            }
-                          >
-                            {avgScore}/5
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">Pending</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {submission.evaluation ? (
-                          submission.evaluation.url_passed ? (
-                            <span className="text-green-600">✓</span>
-                          ) : (
-                            <span className="text-red-500">✗</span>
+                      : null;
+
+                    return (
+                      <TableRow
+                        key={submission.id}
+                        className="cursor-pointer"
+                        onClick={() =>
+                          setExpandedId(
+                            expandedId === submission.id ? null : submission.id,
                           )
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {submission.evaluation ? (
-                          submission.evaluation.worth_human_attention ? (
-                            <Badge variant="default" className="bg-amber-500">
-                              Needs Review
+                        }
+                      >
+                        <TableCell className="font-mono text-sm text-foreground">
+                          {submission.challenge
+                            ? getJobNumber(submission.challenge.id)
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {submission.candidate_name}
+                        </TableCell>
+                        <TableCell>
+                          {avgScore !== null ? (
+                            avgScore >= 6 ? (
+                              <span className="text-primary">PASS</span>
+                            ) : (
+                              <span className="text-destructive">FAIL</span>
+                            )
+                          ) : (
+                            <span className="text-warning">
+                              Evaluating<span className="animate-blink">_</span>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {submission.evaluation ? (
+                            submission.evaluation.url_passed ? (
+                              <span className="text-primary">PASS</span>
+                            ) : (
+                              <span className="text-destructive">FAIL</span>
+                            )
+                          ) : (
+                            <span className="text-warning">
+                              Evaluating<span className="animate-blink">_</span>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {submission.evaluation?.video_score != null ? (
+                            <Badge
+                              variant={
+                                submission.evaluation.video_score >= 8
+                                  ? "priority"
+                                  : submission.evaluation.video_score >= 5
+                                    ? "warning"
+                                    : "destructive"
+                              }
+                            >
+                              {submission.evaluation.video_score}/10
                             </Badge>
+                          ) : submission.video_path ? (
+                            <span className="text-warning">
+                              Evaluating<span className="animate-blink">_</span>
+                            </span>
                           ) : (
-                            <span className="text-gray-400">-</span>
-                          )
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          {expandedId === submission.id ? "▲" : "▼"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </Card>
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const qPass = avgScore !== null && avgScore >= 6;
+                            const urlPass =
+                              submission.evaluation?.url_passed ?? false;
+                            const bothPass = qPass && urlPass;
+                            const videoScore = submission.evaluation?.video_score;
+
+                            // Still evaluating questions or URL
+                            if (avgScore === null || !submission.evaluation) {
+                              return (
+                                <span className="text-warning">
+                                  Evaluating<span className="animate-blink">_</span>
+                                </span>
+                              );
+                            }
+
+                            if (!bothPass) {
+                              return <Badge variant="secondary">○ Skip</Badge>;
+                            }
+
+                            if (videoScore == null) {
+                              return submission.video_path ? (
+                                <span className="text-warning">
+                                  Evaluating<span className="animate-blink">_</span>
+                                </span>
+                              ) : (
+                                <Badge variant="warning">◇ Maybe</Badge>
+                              );
+                            }
+
+                            if (videoScore >= 8) {
+                              return (
+                                <Badge variant="priority">◆ Priority</Badge>
+                              );
+                            } else if (videoScore >= 5) {
+                              return (
+                                <Badge variant="warning">◇ Maybe</Badge>
+                              );
+                            } else {
+                              return (
+                                <Badge variant="secondary">○ Skip</Badge>
+                              );
+                            }
+                          })()}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                          {submission.evaluation?.video_notes
+                            ? submission.evaluation.video_notes.split("\n\n")[0]
+                            : "-"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          </TooltipProvider>
         )}
 
         <AnimatePresence>
@@ -454,29 +592,29 @@ export default function DashboardPage() {
                       {/* URL and Video */}
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                          <h4 className="font-semibold mb-2">Demo URL</h4>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Demo URL</h4>
                           <a
                             href={submission.demo_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-primary hover:underline"
                           >
                             {submission.demo_url}
                           </a>
                           {submission.evaluation && (
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               {submission.evaluation.url_notes}
                             </p>
                           )}
                         </div>
                         {submission.video_path && (
                           <div>
-                            <h4 className="font-semibold mb-2">Video</h4>
+                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video</h4>
                             <a
                               href={submission.video_path}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
+                              className="text-primary hover:underline"
                             >
                               View Video
                             </a>
@@ -484,9 +622,19 @@ export default function DashboardPage() {
                         )}
                       </div>
 
+                      {/* Video Evaluation Details */}
+                      {submission.evaluation?.video_notes && (
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video Evaluation</h4>
+                          <div className="text-sm text-foreground whitespace-pre-wrap border border-border p-4">
+                            {submission.evaluation.video_notes}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Questions and Answers with Scores */}
                       <div className="space-y-6">
-                        <h4 className="font-semibold">Questions & Answers</h4>
+                        <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Questions & Answers</h4>
                         {questions.map((question) => {
                           const answer = answers.find(
                             (a) => a.question_id === question.id,
@@ -498,49 +646,63 @@ export default function DashboardPage() {
                           return (
                             <div
                               key={question.id}
-                              className="border rounded-lg p-4 space-y-3"
+                              className="border border-border p-4 space-y-3"
                             >
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-foreground">
                                 {question.text}
                               </p>
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                                 {answer?.text || "(No answer)"}
                               </p>
 
                               {questionScores.length > 0 && (
-                                <div className="pt-2 border-t space-y-2">
-                                  <p className="text-xs font-medium text-gray-500 uppercase">
+                                <div className="pt-2 border-t border-border space-y-2">
+                                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
                                     Evaluation
                                   </p>
                                   {questionScores.map((score) => {
                                     const criterion = question.criteria.find(
                                       (c) => c.id === score.criterion_id,
                                     );
+                                    const scoreValue = score.score * 2;
                                     return (
                                       <div
                                         key={score.criterion_id}
-                                        className="flex items-start gap-3"
+                                        className="space-y-1"
                                       >
-                                        <Badge
-                                          variant={
-                                            score.score >= 4
-                                              ? "default"
-                                              : score.score >= 3
-                                                ? "secondary"
-                                                : "destructive"
-                                          }
-                                          className="shrink-0"
-                                        >
-                                          {score.score}/5
-                                        </Badge>
-                                        <div className="text-sm">
-                                          <span className="font-medium">
-                                            {criterion?.text || "Criterion"}:
-                                          </span>{" "}
-                                          <span className="text-gray-600">
-                                            {score.reasoning}
+                                        <div className="flex items-center gap-3">
+                                          <Badge
+                                            variant={
+                                              scoreValue >= 8
+                                                ? "priority"
+                                                : scoreValue >= 6
+                                                  ? "warning"
+                                                  : "destructive"
+                                            }
+                                            className="shrink-0"
+                                          >
+                                            {scoreValue}/10
+                                          </Badge>
+                                          <span className="text-xs text-muted-foreground uppercase">
+                                            {criterion?.text || "Criterion"}
                                           </span>
                                         </div>
+                                        {/* Score bar */}
+                                        <div className="score-bar w-full max-w-xs">
+                                          <div
+                                            className={`score-bar-fill ${
+                                              scoreValue >= 8
+                                                ? "score-bar-fill-green"
+                                                : scoreValue >= 6
+                                                  ? "score-bar-fill-amber"
+                                                  : "score-bar-fill-red"
+                                            }`}
+                                            style={{ width: `${scoreValue * 10}%` }}
+                                          />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                          {score.reasoning}
+                                        </p>
                                       </div>
                                     );
                                   })}
@@ -555,8 +717,8 @@ export default function DashboardPage() {
                         <>
                           {/* Summary */}
                           <div>
-                            <h4 className="font-semibold mb-2">Summary</h4>
-                            <ul className="list-disc list-inside text-sm text-gray-700">
+                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Summary</h4>
+                            <ul className="list-disc list-inside text-sm text-foreground">
                               {submission.evaluation.summary_bullets.map(
                                 (bullet, i) => (
                                   <li key={i}>{bullet}</li>
@@ -567,11 +729,11 @@ export default function DashboardPage() {
 
                           {/* Flag Reason */}
                           {submission.evaluation.flag_reason && (
-                            <div className="bg-yellow-50 p-3 rounded">
-                              <h4 className="font-semibold text-yellow-800">
+                            <div className="border border-warning p-3">
+                              <h4 className="text-xs uppercase tracking-wider text-warning mb-1">
                                 Flag Reason
                               </h4>
-                              <p className="text-sm text-yellow-700">
+                              <p className="text-sm text-warning">
                                 {submission.evaluation.flag_reason}
                               </p>
                             </div>
@@ -580,7 +742,7 @@ export default function DashboardPage() {
                           {/* Rejection Draft */}
                           <div>
                             <div className="flex items-center gap-4 mb-2">
-                              <h4 className="font-semibold">Rejection Draft</h4>
+                              <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Rejection Draft</h4>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -596,7 +758,7 @@ export default function DashboardPage() {
                               </Button>
                             </div>
                             {submission.evaluation.rejection_draft && (
-                              <pre className="text-sm text-gray-700 whitespace-pre-wrap bg-white p-4 rounded border">
+                              <pre className="text-sm text-foreground whitespace-pre-wrap bg-secondary p-4 border border-border">
                                 {submission.evaluation.rejection_draft}
                               </pre>
                             )}
@@ -605,8 +767,8 @@ export default function DashboardPage() {
                       )}
 
                       {!submission.evaluation && (
-                        <div className="text-center py-4 text-gray-500">
-                          Evaluation in progress...
+                        <div className="text-center py-4 text-warning">
+                          Evaluation in progress<span className="animate-blink">_</span>
                         </div>
                       )}
                     </CardContent>
