@@ -74,6 +74,9 @@ export async function POST() {
     await supabaseAdmin.from('evaluations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseAdmin.from('submissions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
+    // Delete existing AI Builder seed challenges
+    await supabaseAdmin.from('challenges').delete().eq('role_description', 'AI Builder');
+
     // Create challenge
     console.log('[seed] Creating challenge...');
     const { error: challengeError } = await supabaseAdmin.from('challenges').insert(challenge);
