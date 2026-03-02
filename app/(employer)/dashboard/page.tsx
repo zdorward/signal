@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,10 +42,9 @@ export default function DashboardPage() {
     [],
   );
   const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedChallengeId, setExpandedChallengeId] = useState<string | null>(
-    null,
-  );
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
+  const [expandedChallengeId, setExpandedChallengeId] = useState<string | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [generatingRejection, setGeneratingRejection] = useState<string | null>(
     null,
   );
@@ -82,6 +80,16 @@ export default function DashboardPage() {
     const interval = setInterval(fetchSubmissions, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-expand if only 1 job has submissions
+  useEffect(() => {
+    if (!loading && submissions.length > 0) {
+      const jobIds = Array.from(new Set(submissions.map(s => s.challenge_id)));
+      if (jobIds.length === 1) {
+        setExpandedJobId(jobIds[0]);
+      }
+    }
+  }, [loading, submissions]);
 
   const copyApplyLink = (e: React.MouseEvent, challengeId: string) => {
     e.stopPropagation();
@@ -184,11 +192,6 @@ export default function DashboardPage() {
     return bVideoScore - aVideoScore;
   });
 
-  const pendingReviewCount = submissions.filter((s) => {
-    const qPass = questionsPass(s);
-    const urlPass = s.evaluation?.url_passed ?? false;
-    return qPass && urlPass;
-  }).length;
 
   if (loading) {
     return (
@@ -201,16 +204,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Submission Count Hero */}
-      {submissions.length > 0 && (
-        <div className="text-center py-8 border border-border">
-          <div className="text-7xl font-bold text-foreground">{pendingReviewCount}</div>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
-            Submissions Pending Review
-          </div>
-        </div>
-      )}
-
       {/* Positions Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -242,6 +235,7 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableHead className="w-24">Job #</TableHead>
                   <TableHead className="w-48">Position</TableHead>
+                  <TableHead className="w-28">Applicants</TableHead>
                   <TableHead>Application Link</TableHead>
                   <TableHead className="w-28">Created</TableHead>
                   <TableHead className="w-10"></TableHead>
@@ -250,6 +244,7 @@ export default function DashboardPage() {
               <TableBody>
                 {challenges.map((challenge) => {
                   const applyLink = `${typeof window !== "undefined" ? window.location.origin : ""}/apply/${challenge.id}`;
+                  const applicantCount = submissions.filter((s) => s.challenge_id === challenge.id).length;
                   return (
                   <React.Fragment key={challenge.id}>
                     <TableRow
@@ -267,6 +262,9 @@ export default function DashboardPage() {
                       </TableCell>
                       <TableCell className="font-medium text-foreground">
                         {challenge.role_description}
+                      </TableCell>
+                      <TableCell className="text-foreground font-medium">
+                        {applicantCount}
                       </TableCell>
                       <TableCell>
                         <div
@@ -307,7 +305,7 @@ export default function DashboardPage() {
                     </TableRow>
                     {expandedChallengeId === challenge.id && (
                       <TableRow>
-                        <TableCell colSpan={5} className="bg-secondary p-0">
+                        <TableCell colSpan={6} className="bg-secondary p-0">
                           <div className="p-6 space-y-4">
                             {challenge.intro_text && (
                               <div>
@@ -385,391 +383,410 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <TooltipProvider>
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-24">
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Job #</TooltipTrigger>
-                        <TooltipContent>Unique identifier for the position</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead>
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Candidate</TooltipTrigger>
-                        <TooltipContent>Candidate name</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="w-28">
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Questions</TooltipTrigger>
-                        <TooltipContent>Pass/fail based on written responses (≥6/10 to pass)</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="w-20">
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">URL</TooltipTrigger>
-                        <TooltipContent>Whether the demo URL resolves and is relevant</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="w-28">
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Video Score</TooltipTrigger>
-                        <TooltipContent>AI evaluation of video demo (1-10)</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="w-36">
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Worth a Look?</TooltipTrigger>
-                        <TooltipContent>Yes (8+), Maybe (5-7), No (&lt;5) based on video score</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead>
-                      <Tooltip>
-                        <TooltipTrigger className="cursor-help">Video Summary</TooltipTrigger>
-                        <TooltipContent>One-line summary from video evaluation</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedSubmissions.map((submission) => {
-                    const avgScore = submission.evaluation
-                      ? calculateAverageScore(
-                          submission.evaluation
-                            .criterion_scores_json as CriterionScore[],
-                        )
-                      : null;
+          <div className="space-y-4">
+            {/* Group submissions by challenge */}
+            {Array.from(new Set(submissions.map(s => s.challenge_id))).map(challengeId => {
+              const challenge = challenges.find(c => c.id === challengeId);
+              const jobSubmissions = sortedSubmissions.filter(s => s.challenge_id === challengeId);
+              const isExpanded = expandedJobId === challengeId;
 
-                    return (
-                      <TableRow
-                        key={submission.id}
-                        className="cursor-pointer"
-                        onClick={() =>
-                          setExpandedId(
-                            expandedId === submission.id ? null : submission.id,
-                          )
-                        }
-                      >
-                        <TableCell className="font-mono text-sm text-foreground">
-                          {submission.challenge
-                            ? getJobNumber(submission.challenge.id)
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">
-                          {submission.candidate_name}
-                        </TableCell>
-                        <TableCell>
-                          {avgScore !== null ? (
-                            avgScore >= 6 ? (
-                              <span className="text-primary">PASS</span>
-                            ) : (
-                              <span className="text-destructive">FAIL</span>
-                            )
-                          ) : (
-                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {submission.evaluation ? (
-                            submission.evaluation.url_passed ? (
-                              <span className="text-primary">PASS</span>
-                            ) : (
-                              <span className="text-destructive">FAIL</span>
-                            )
-                          ) : (
-                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {submission.evaluation?.video_score != null ? (
-                            <Badge
-                              variant={
-                                submission.evaluation.video_score >= 8
-                                  ? "priority"
-                                  : submission.evaluation.video_score >= 5
-                                    ? "warning"
-                                    : "destructive"
-                              }
-                            >
-                              {submission.evaluation.video_score}/10
-                            </Badge>
-                          ) : submission.video_path ? (
-                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            const qPass = avgScore !== null && avgScore >= 6;
-                            const urlPass =
-                              submission.evaluation?.url_passed ?? false;
-                            const bothPass = qPass && urlPass;
-                            const videoScore = submission.evaluation?.video_score;
+              return (
+                <Card key={challengeId}>
+                  {/* Job header row */}
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+                    onClick={() => setExpandedJobId(isExpanded ? null : challengeId)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {getJobNumber(challengeId)}
+                      </span>
+                      <span className="font-medium text-foreground">
+                        {challenge?.role_description || "Unknown Position"}
+                      </span>
+                      <Badge variant="secondary">{jobSubmissions.length} applicant{jobSubmissions.length !== 1 ? "s" : ""}</Badge>
+                    </div>
+                    <svg
+                      className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
 
-                            // Still evaluating text - show dot
-                            if (!submission.evaluation) {
-                              return <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />;
-                            }
+                  {/* Expanded applicants table */}
+                  {isExpanded && (
+                    <TooltipProvider>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">Candidate</TooltipTrigger>
+                                <TooltipContent>Candidate name</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                            <TableHead className="w-28">
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">Questions</TooltipTrigger>
+                                <TooltipContent>Pass/fail based on written responses (≥6/10 to pass)</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                            <TableHead className="w-20">
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">URL</TooltipTrigger>
+                                <TooltipContent>Whether the demo URL resolves and is relevant</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                            <TableHead className="w-28">
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">Video Score</TooltipTrigger>
+                                <TooltipContent>AI evaluation of video demo (1-10)</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                            <TableHead className="w-36">
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">Worth a Look?</TooltipTrigger>
+                                <TooltipContent>Yes (8+), Maybe (5-7), No (&lt;5) based on video score</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                            <TableHead>
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-help">Video Summary</TooltipTrigger>
+                                <TooltipContent>One-line summary from video evaluation</TooltipContent>
+                              </Tooltip>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {jobSubmissions.map((submission) => {
+                            const avgScore = submission.evaluation
+                              ? calculateAverageScore(
+                                  submission.evaluation
+                                    .criterion_scores_json as CriterionScore[],
+                                )
+                              : null;
 
-                            if (!bothPass) {
-                              return <Badge variant="secondary">○ Skip</Badge>;
-                            }
+                            const questions = (submission.challenge?.questions_json ||
+                              []) as Question[];
+                            const answers = (submission.answers_json || []) as Answer[];
+                            const criterionScores = (submission.evaluation
+                              ?.criterion_scores_json || []) as CriterionScore[];
 
-                            if (videoScore == null) {
-                              return submission.video_path ? (
-                                <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
-                              ) : (
-                                <Badge variant="warning">◇ Maybe</Badge>
-                              );
-                            }
+                            return (
+                              <React.Fragment key={submission.id}>
+                                <TableRow
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    setExpandedSubmissionId(
+                                      expandedSubmissionId === submission.id ? null : submission.id,
+                                    )
+                                  }
+                                >
+                                  <TableCell className="font-medium text-foreground">
+                                    {submission.candidate_name}
+                                  </TableCell>
+                                  <TableCell>
+                                    {avgScore !== null ? (
+                                      avgScore >= 6 ? (
+                                        <span className="text-primary">PASS</span>
+                                      ) : (
+                                        <span className="text-destructive">FAIL</span>
+                                      )
+                                    ) : (
+                                      <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {submission.evaluation ? (
+                                      submission.evaluation.url_passed ? (
+                                        <span className="text-primary">PASS</span>
+                                      ) : (
+                                        <span className="text-destructive">FAIL</span>
+                                      )
+                                    ) : (
+                                      <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {submission.evaluation?.video_score != null ? (
+                                      <Badge
+                                        variant={
+                                          submission.evaluation.video_score >= 8
+                                            ? "priority"
+                                            : submission.evaluation.video_score >= 5
+                                              ? "warning"
+                                              : "destructive"
+                                        }
+                                      >
+                                        {submission.evaluation.video_score}/10
+                                      </Badge>
+                                    ) : submission.video_path ? (
+                                      <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(() => {
+                                      const qPass = avgScore !== null && avgScore >= 6;
+                                      const urlPass =
+                                        submission.evaluation?.url_passed ?? false;
+                                      const bothPass = qPass && urlPass;
+                                      const videoScore = submission.evaluation?.video_score;
 
-                            if (videoScore >= 8) {
-                              return (
-                                <Badge variant="priority">◆ Priority</Badge>
-                              );
-                            } else if (videoScore >= 5) {
-                              return (
-                                <Badge variant="warning">◇ Maybe</Badge>
-                              );
-                            } else {
-                              return (
-                                <Badge variant="secondary">○ Skip</Badge>
-                              );
-                            }
-                          })()}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                          {submission.evaluation?.video_notes ? (
-                            submission.evaluation.video_notes.split("\n\n")[0]
-                          ) : submission.video_path ? (
-                            <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </Card>
-          </TooltipProvider>
+                                      if (!submission.evaluation) {
+                                        return <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />;
+                                      }
+
+                                      if (!bothPass) {
+                                        return <Badge variant="secondary">○ Skip</Badge>;
+                                      }
+
+                                      if (videoScore == null) {
+                                        return submission.video_path ? (
+                                          <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                                        ) : (
+                                          <Badge variant="warning">◇ Maybe</Badge>
+                                        );
+                                      }
+
+                                      if (videoScore >= 8) {
+                                        return <Badge variant="priority">◆ Priority</Badge>;
+                                      } else if (videoScore >= 5) {
+                                        return <Badge variant="warning">◇ Maybe</Badge>;
+                                      } else {
+                                        return <Badge variant="secondary">○ Skip</Badge>;
+                                      }
+                                    })()}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                                    {submission.evaluation?.video_notes ? (
+                                      submission.evaluation.video_notes.split("\n\n")[0]
+                                    ) : submission.video_path ? (
+                                      <span className="inline-block w-2 h-2 bg-warning rounded-full animate-pulse" />
+                                    ) : (
+                                      "-"
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                                {expandedSubmissionId === submission.id && (
+                                  <TableRow>
+                                    <TableCell colSpan={6} className="bg-secondary p-0">
+                                      <div className="p-6 space-y-6">
+                                        {/* URL and Video */}
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                          <div>
+                                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Demo URL</h4>
+                                            <a
+                                              href={submission.demo_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-primary hover:underline"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              {submission.demo_url}
+                                            </a>
+                                            {submission.evaluation && (
+                                              <p className="text-sm text-muted-foreground mt-1">
+                                                {submission.evaluation.url_notes}
+                                              </p>
+                                            )}
+                                          </div>
+                                          {submission.video_path && (
+                                            <div>
+                                              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video</h4>
+                                              <a
+                                                href={submission.video_path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:underline"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                View Video
+                                              </a>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Video Evaluation Details */}
+                                        {submission.evaluation?.video_notes && (
+                                          <div>
+                                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video Evaluation</h4>
+                                            <div className="text-sm text-foreground whitespace-pre-wrap border border-border p-4">
+                                              {submission.evaluation.video_notes}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Questions and Answers with Scores */}
+                                        <div className="space-y-6">
+                                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Questions & Answers</h4>
+                                          {questions.map((question) => {
+                                            const answer = answers.find(
+                                              (a) => a.question_id === question.id,
+                                            );
+                                            const questionScores = criterionScores.filter(
+                                              (s) => s.question_id === question.id,
+                                            );
+
+                                            return (
+                                              <div
+                                                key={question.id}
+                                                className="border border-border p-4 space-y-3"
+                                              >
+                                                <p className="font-medium text-foreground">
+                                                  {question.text}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                                  {answer?.text || "(No answer)"}
+                                                </p>
+
+                                                {questionScores.length > 0 && (
+                                                  <div className="pt-2 border-t border-border space-y-2">
+                                                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                                                      Evaluation
+                                                    </p>
+                                                    {questionScores.map((score) => {
+                                                      const criterion = question.criteria.find(
+                                                        (c) => c.id === score.criterion_id,
+                                                      );
+                                                      const scoreValue = score.score * 2;
+                                                      return (
+                                                        <div
+                                                          key={score.criterion_id}
+                                                          className="space-y-1"
+                                                        >
+                                                          <div className="flex items-center gap-3">
+                                                            <Badge
+                                                              variant={
+                                                                scoreValue >= 8
+                                                                  ? "priority"
+                                                                  : scoreValue >= 6
+                                                                    ? "warning"
+                                                                    : "destructive"
+                                                              }
+                                                              className="shrink-0"
+                                                            >
+                                                              {scoreValue}/10
+                                                            </Badge>
+                                                            <span className="text-xs text-muted-foreground uppercase">
+                                                              {criterion?.text || "Criterion"}
+                                                            </span>
+                                                          </div>
+                                                          <div className="score-bar w-full max-w-xs">
+                                                            <div
+                                                              className={`score-bar-fill ${
+                                                                scoreValue >= 8
+                                                                  ? "score-bar-fill-green"
+                                                                  : scoreValue >= 6
+                                                                    ? "score-bar-fill-amber"
+                                                                    : "score-bar-fill-red"
+                                                              }`}
+                                                              style={{ width: `${scoreValue * 10}%` }}
+                                                            />
+                                                          </div>
+                                                          <p className="text-sm text-muted-foreground">
+                                                            {score.reasoning}
+                                                          </p>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {submission.evaluation && (
+                                          <>
+                                            {/* Summary */}
+                                            <div>
+                                              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Summary</h4>
+                                              <ul className="list-disc list-inside text-sm text-foreground">
+                                                {submission.evaluation.summary_bullets.map(
+                                                  (bullet, i) => (
+                                                    <li key={i}>{bullet}</li>
+                                                  ),
+                                                )}
+                                              </ul>
+                                            </div>
+
+                                            {/* Flag Reason */}
+                                            {submission.evaluation.flag_reason && (
+                                              <div className="border border-warning p-3">
+                                                <h4 className="text-xs uppercase tracking-wider text-warning mb-1">
+                                                  Flag Reason
+                                                </h4>
+                                                <p className="text-sm text-warning">
+                                                  {submission.evaluation.flag_reason}
+                                                </p>
+                                              </div>
+                                            )}
+
+                                            {/* Rejection Draft */}
+                                            <div>
+                                              <div className="flex items-center gap-4 mb-2">
+                                                <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Rejection Draft</h4>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleGenerateRejection(submission.id);
+                                                  }}
+                                                  disabled={generatingRejection === submission.id}
+                                                >
+                                                  {generatingRejection === submission.id
+                                                    ? "Generating..."
+                                                    : "Regenerate"}
+                                                </Button>
+                                              </div>
+                                              {submission.evaluation.rejection_draft && (
+                                                <>
+                                                  <pre className="text-sm text-foreground whitespace-pre-wrap bg-background p-4 border border-border mb-3">
+                                                    {submission.evaluation.rejection_draft}
+                                                  </pre>
+                                                  <Button
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      alert("Email sending is not implemented yet.");
+                                                    }}
+                                                  >
+                                                    Send Email
+                                                  </Button>
+                                                </>
+                                              )}
+                                            </div>
+                                          </>
+                                        )}
+
+                                        {!submission.evaluation && (
+                                          <div className="text-center py-4 text-warning">
+                                            Evaluation in progress<span className="animate-blink">_</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TooltipProvider>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
         )}
 
-        <AnimatePresence>
-          {expandedId && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mt-4"
-            >
-              {(() => {
-                const submission = submissions.find((s) => s.id === expandedId);
-                if (!submission) return null;
-
-                const questions = (submission.challenge?.questions_json ||
-                  []) as Question[];
-                const answers = (submission.answers_json || []) as Answer[];
-                const criterionScores = (submission.evaluation
-                  ?.criterion_scores_json || []) as CriterionScore[];
-
-                return (
-                  <Card>
-                    <CardContent className="p-6 space-y-6">
-                      {/* URL and Video */}
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Demo URL</h4>
-                          <a
-                            href={submission.demo_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {submission.demo_url}
-                          </a>
-                          {submission.evaluation && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {submission.evaluation.url_notes}
-                            </p>
-                          )}
-                        </div>
-                        {submission.video_path && (
-                          <div>
-                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video</h4>
-                            <a
-                              href={submission.video_path}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline"
-                            >
-                              View Video
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Video Evaluation Details */}
-                      {submission.evaluation?.video_notes && (
-                        <div>
-                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Video Evaluation</h4>
-                          <div className="text-sm text-foreground whitespace-pre-wrap border border-border p-4">
-                            {submission.evaluation.video_notes}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Questions and Answers with Scores */}
-                      <div className="space-y-6">
-                        <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Questions & Answers</h4>
-                        {questions.map((question) => {
-                          const answer = answers.find(
-                            (a) => a.question_id === question.id,
-                          );
-                          const questionScores = criterionScores.filter(
-                            (s) => s.question_id === question.id,
-                          );
-
-                          return (
-                            <div
-                              key={question.id}
-                              className="border border-border p-4 space-y-3"
-                            >
-                              <p className="font-medium text-foreground">
-                                {question.text}
-                              </p>
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                {answer?.text || "(No answer)"}
-                              </p>
-
-                              {questionScores.length > 0 && (
-                                <div className="pt-2 border-t border-border space-y-2">
-                                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                                    Evaluation
-                                  </p>
-                                  {questionScores.map((score) => {
-                                    const criterion = question.criteria.find(
-                                      (c) => c.id === score.criterion_id,
-                                    );
-                                    const scoreValue = score.score * 2;
-                                    return (
-                                      <div
-                                        key={score.criterion_id}
-                                        className="space-y-1"
-                                      >
-                                        <div className="flex items-center gap-3">
-                                          <Badge
-                                            variant={
-                                              scoreValue >= 8
-                                                ? "priority"
-                                                : scoreValue >= 6
-                                                  ? "warning"
-                                                  : "destructive"
-                                            }
-                                            className="shrink-0"
-                                          >
-                                            {scoreValue}/10
-                                          </Badge>
-                                          <span className="text-xs text-muted-foreground uppercase">
-                                            {criterion?.text || "Criterion"}
-                                          </span>
-                                        </div>
-                                        {/* Score bar */}
-                                        <div className="score-bar w-full max-w-xs">
-                                          <div
-                                            className={`score-bar-fill ${
-                                              scoreValue >= 8
-                                                ? "score-bar-fill-green"
-                                                : scoreValue >= 6
-                                                  ? "score-bar-fill-amber"
-                                                  : "score-bar-fill-red"
-                                            }`}
-                                            style={{ width: `${scoreValue * 10}%` }}
-                                          />
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                          {score.reasoning}
-                                        </p>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {submission.evaluation && (
-                        <>
-                          {/* Summary */}
-                          <div>
-                            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Summary</h4>
-                            <ul className="list-disc list-inside text-sm text-foreground">
-                              {submission.evaluation.summary_bullets.map(
-                                (bullet, i) => (
-                                  <li key={i}>{bullet}</li>
-                                ),
-                              )}
-                            </ul>
-                          </div>
-
-                          {/* Flag Reason */}
-                          {submission.evaluation.flag_reason && (
-                            <div className="border border-warning p-3">
-                              <h4 className="text-xs uppercase tracking-wider text-warning mb-1">
-                                Flag Reason
-                              </h4>
-                              <p className="text-sm text-warning">
-                                {submission.evaluation.flag_reason}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Rejection Draft */}
-                          <div>
-                            <div className="flex items-center gap-4 mb-2">
-                              <h4 className="text-xs uppercase tracking-wider text-muted-foreground">Rejection Draft</h4>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleGenerateRejection(submission.id);
-                                }}
-                                disabled={generatingRejection === submission.id}
-                              >
-                                {generatingRejection === submission.id
-                                  ? "Generating..."
-                                  : "Regenerate"}
-                              </Button>
-                            </div>
-                            {submission.evaluation.rejection_draft && (
-                              <pre className="text-sm text-foreground whitespace-pre-wrap bg-secondary p-4 border border-border">
-                                {submission.evaluation.rejection_draft}
-                              </pre>
-                            )}
-                          </div>
-                        </>
-                      )}
-
-                      {!submission.evaluation && (
-                        <div className="text-center py-4 text-warning">
-                          Evaluation in progress<span className="animate-blink">_</span>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
