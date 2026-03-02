@@ -49,14 +49,17 @@ export async function POST(request: Request) {
 
     // Fetch video from URL
     console.log('[evaluate-video] Fetching video from:', typedSubmission.video_path);
+    const fetchStart = Date.now();
     const videoResponse = await fetch(typedSubmission.video_path);
+    console.log(`[evaluate-video] Fetch response received in ${Date.now() - fetchStart}ms, status:`, videoResponse.status);
 
     if (!videoResponse.ok) {
       return NextResponse.json({ error: 'Failed to fetch video' }, { status: 500 });
     }
 
+    const bufferStart = Date.now();
     const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
-    console.log('[evaluate-video] Video size:', videoBuffer.byteLength, 'bytes');
+    console.log(`[evaluate-video] Video buffered in ${Date.now() - bufferStart}ms, size:`, videoBuffer.byteLength, 'bytes');
 
     // Create temp directory for processing
     const tempDir = join(tmpdir(), `signal-video-${submission_id}`);
@@ -67,13 +70,15 @@ export async function POST(request: Request) {
 
     // Extract frames using ffmpeg (1 frame every 2 seconds, max 30 frames)
     console.log('[evaluate-video] Extracting frames...');
+    const ffmpegStart = Date.now();
     try {
       await execAsync(
         `ffmpeg -i "${videoPath}" -vf "fps=0.5,scale=640:-1" -frames:v 30 -q:v 2 "${tempDir}/frame_%03d.jpg" -y`,
         { timeout: 60000 }
       );
+      console.log(`[evaluate-video] Frames extracted in ${Date.now() - ffmpegStart}ms`);
     } catch (ffmpegError) {
-      console.error('[evaluate-video] ffmpeg error:', ffmpegError);
+      console.error('[evaluate-video] ffmpeg error after', Date.now() - ffmpegStart, 'ms:', ffmpegError);
       await rm(tempDir, { recursive: true, force: true }).catch(() => {});
       return NextResponse.json({ error: 'Failed to extract video frames. Is ffmpeg installed?' }, { status: 500 });
     }
@@ -115,12 +120,13 @@ export async function POST(request: Request) {
       );
 
       console.log('[evaluate-video] Transcribing with Whisper...');
+      const whisperStart = Date.now();
       const transcription = await openai.audio.transcriptions.create({
         file: createReadStream(audioPath),
         model: 'whisper-1',
       });
       transcript = transcription.text;
-      console.log(`[evaluate-video] Transcript: ${transcript.substring(0, 100)}...`);
+      console.log(`[evaluate-video] Whisper completed in ${Date.now() - whisperStart}ms, transcript: ${transcript.substring(0, 100)}...`);
     } catch (audioError) {
       console.warn('[evaluate-video] Audio extraction/transcription failed:', audioError);
       // Continue without transcript - video may not have audio
@@ -197,6 +203,7 @@ Provide your evaluation as JSON only (no markdown):
 
     // Call Claude with extracted frames and transcript
     console.log('[evaluate-video] Calling Claude with', frameImages.length, 'frames and transcript...');
+    const claudeStart = Date.now();
 
     const introText = transcript
       ? `The following ${frameImages.length} images are frames extracted from a candidate's demo video (1 frame every 2 seconds). The audio has been transcribed and is included in the evaluation prompt. Analyze both the visual demonstration and what the candidate said.`
@@ -229,7 +236,7 @@ Provide your evaluation as JSON only (no markdown):
     }
 
     const responseText = content.text;
-    console.log('[evaluate-video] Claude response received');
+    console.log(`[evaluate-video] Claude response received in ${Date.now() - claudeStart}ms`);
 
     // Parse response
     let evaluation;
