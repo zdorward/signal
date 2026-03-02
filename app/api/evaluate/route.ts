@@ -200,6 +200,8 @@ Evaluate each criterion and provide scores.`;
 
       // Fire-and-forget with timeout - don't wait for Railway to finish processing
       const triggerVideoEval = async () => {
+        // Small delay to ensure submission is committed to database
+        await new Promise(r => setTimeout(r, 1000));
         console.log(`[evaluate] Triggering video eval at ${videoEvalUrl}/api/evaluate-video`);
         try {
           const controller = new AbortController();

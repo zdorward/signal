@@ -31,16 +31,35 @@ export async function POST(request: Request) {
 
     const submission_id = submissionId;
 
-    // Fetch submission with challenge
-    const { data: submission, error: subError } = await supabaseAdmin
-      .from('submissions')
-      .select('*, challenge:challenges(*)')
-      .eq('id', submission_id)
-      .single();
+    // Fetch submission with challenge (retry a few times in case of race condition)
+    console.log('[evaluate-video] Fetching submission from database...');
+    let submission = null;
+    let subError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        console.log(`[evaluate-video] Retrying submission fetch, attempt ${attempt + 1}...`);
+        await new Promise(r => setTimeout(r, 2000)); // Wait 2s between retries
+      }
+      console.log(`[evaluate-video] Supabase query attempt ${attempt + 1}...`);
+      const result = await supabaseAdmin
+        .from('submissions')
+        .select('*, challenge:challenges(*)')
+        .eq('id', submission_id)
+        .single();
+      console.log(`[evaluate-video] Supabase query completed, data: ${!!result.data}, error: ${!!result.error}`);
 
-    if (subError || !submission) {
+      if (result.data) {
+        submission = result.data;
+        break;
+      }
+      subError = result.error;
+    }
+
+    if (!submission) {
+      console.error('[evaluate-video] Submission not found after retries:', subError);
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
+    console.log('[evaluate-video] Submission fetched successfully');
 
     const typedSubmission = submission as unknown as Submission;
 
