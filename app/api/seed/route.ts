@@ -125,7 +125,9 @@ export async function POST() {
         summary_bullets: [`Average score: ${avgScore.toFixed(1)}/5`],
         worth_human_attention: avgScore >= 4 && candidate.url_passed,
         flag_reason: null,
-        rejection_draft: avgScore < 3 ? `Dear ${candidate.name},\n\nThank you for your interest. We've decided to move forward with other candidates.\n\nBest,\nThe Team` : null,
+        rejection_draft: (!candidate.url_passed || (candidate.video_score !== null && candidate.video_score < 5) || avgScore < 3)
+          ? `Dear ${candidate.name},\n\nThank you for your interest in the AI Builder role. After careful review, we've decided to move forward with other candidates whose experience more closely aligns with what we're looking for.\n\nWe appreciate the time you invested in your application and wish you the best in your job search.\n\nBest,\nThe Hiring Team`
+          : null,
         interview_draft: (avgScore >= 3 && candidate.url_passed && (candidate.video_score ?? 0) >= 8) ? `Dear ${candidate.name},\n\nWe were impressed by your submission and would love to chat.\n\nBest,\nThe Team` : null,
       });
     }

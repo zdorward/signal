@@ -618,7 +618,9 @@ async function seed() {
       ],
       worth_human_attention: avgScore >= 4 && candidate.url_passed,
       flag_reason: null,
-      rejection_draft: avgScore < 3 ? `Dear ${candidate.name.split(' ')[0]},\n\nThank you for your interest in the AI Builder role at Wealthsimple. After careful review, we've decided to move forward with other candidates.\n\nWe appreciate the time you invested in your application.\n\nBest,\nThe Wealthsimple Team` : null,
+      rejection_draft: (!candidate.url_passed || (candidate.video_score !== null && candidate.video_score < 5) || avgScore < 3)
+        ? `Dear ${candidate.name.split(' ')[0]},\n\nThank you for your interest in the AI Builder role at Wealthsimple. After careful review, we've decided to move forward with other candidates whose experience more closely aligns with what we're looking for.\n\nWe appreciate the time you invested in your application and wish you the best in your job search.\n\nBest,\nThe Wealthsimple Team`
+        : null,
       interview_draft: (avgScore >= 3 && candidate.url_passed && (candidate.video_score ?? 0) >= 8) ? `Dear ${candidate.name.split(' ')[0]},\n\nThank you for applying to the AI Builder role at Wealthsimple. We were impressed by your submission and would love to learn more about you.\n\nWould you be available for a 30-minute conversation next week? Please let us know your availability and we'll send over a calendar invite.\n\nLooking forward to speaking with you!\n\nBest,\nThe Wealthsimple Team` : null,
     });
 

@@ -88,6 +88,11 @@ CALIBRATION RULES:
 - Only score 1-2 for answers that genuinely miss the mark.
 - Evaluate against the criterion ONLY. Don't impose unstated requirements.
 
+REJECTION DRAFT:
+- Always generate a rejection_draft for candidates who are clearly not suitable (avg score < 3, or URL is irrelevant)
+- The draft should be professional, brief, and kind
+- For strong candidates (avg score >= 4), set rejection_draft to null
+
 OUTPUT FORMAT (raw JSON only, no markdown):
 {
   "criterion_scores": [
@@ -98,7 +103,7 @@ OUTPUT FORMAT (raw JSON only, no markdown):
   "summary_bullets": ["Key takeaway 1", "Key takeaway 2", "Key takeaway 3"],
   "worth_human_attention": true,
   "flag_reason": null,
-  "rejection_draft": "Dear [name],\\n\\nThank you for..."
+  "rejection_draft": "Dear [name],\\n\\nThank you for your interest... (or null for strong candidates)"
 }`;
 
     // Build question/answer pairs with criteria
