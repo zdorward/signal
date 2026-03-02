@@ -61,6 +61,25 @@ export default function Home() {
           </Card>
         </div>
 
+        {/* About Section */}
+        <div className="space-y-4 text-sm text-muted-foreground border-t border-border pt-8">
+          <p>
+            Hiring is broken. AI-generated resumes flood inboxes. ATS systems filter on keywords, not capability. The signal-to-noise ratio has collapsed. Employers can&apos;t tell who can actually do the work.
+          </p>
+          <p>
+            But there&apos;s one thing AI can&apos;t fake: a working system. A deployed product. A demo you can click. Proof of work is the only reliable signal left.
+          </p>
+          <p className="text-foreground">
+            Signal is built on that principle.
+          </p>
+        </div>
+
+        <div className="text-center">
+          <Link href="/about" className="text-sm text-primary hover:underline">
+            → READ: Why Signal exists
+          </Link>
+        </div>
+
         <div className="text-center">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">
             Status: <span className="text-primary">Operational</span>
