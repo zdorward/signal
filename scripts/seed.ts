@@ -96,7 +96,7 @@ More importantly, there's a psychological dimension. When people make their own 
     scores: { q1c1: 5, q1c2: 5, q2c1: 5, q2c2: 5 },
     url_passed: true,
     video_score: 9,
-    video_summary: 'AI tax optimization tool',
+    video_summary: 'AI tax optimization tool', // PRIORITY
   },
   {
     name: 'Candidate 2',
@@ -121,10 +121,10 @@ The AI can detect life changes from behavioral signals—spending patterns shift
 Risk tolerance isn't just a number. It's a reflection of someone's relationship with uncertainty, their life circumstances, their values. Two people with identical financial situations might need completely different portfolios because they experience risk differently. The AI can inform, can prompt reflection, can make the conversation easier—but the human has to own the answer.`,
       },
     ],
-    scores: { q1c1: 5, q1c2: 4, q2c1: 5, q2c2: 5 },
+    scores: { q1c1: 4, q1c2: 4, q2c1: 4, q2c2: 4 },
     url_passed: true,
-    video_score: 8,
-    video_summary: 'Portfolio rebalancing automation',
+    video_score: 7,
+    video_summary: 'Portfolio rebalancing automation', // MAYBE
   },
   {
     name: 'Candidate 3',
@@ -149,10 +149,10 @@ Debt is fundamentally different from other financial decisions because it constr
 The human must weigh factors that aren't in the data: family plans, career ambitions, tolerance for being locked in. The AI's job is to make sure they understand the true cost and the realistic scenarios—not to make the call.`,
       },
     ],
-    scores: { q1c1: 5, q1c2: 5, q2c1: 4, q2c2: 5 },
+    scores: { q1c1: 5, q1c2: 4, q2c1: 5, q2c2: 4 },
     url_passed: true,
-    video_score: 9,
-    video_summary: 'AI financial coaching app',
+    video_score: 8,
+    video_summary: 'AI financial coaching app', // PRIORITY
   },
   {
     name: 'Candidate 4',
@@ -177,10 +177,10 @@ Account closure is irreversible and consequential. It affects credit scores, dis
 A human reviewer can call the customer, investigate context, make judgment calls that consider the full picture. The AI identifies patterns; the human decides fates.`,
       },
     ],
-    scores: { q1c1: 4, q1c2: 5, q2c1: 5, q2c2: 5 },
+    scores: { q1c1: 4, q1c2: 4, q2c1: 4, q2c2: 4 },
     url_passed: true,
-    video_score: 8,
-    video_summary: 'Fraud detection with human oversight',
+    video_score: 6,
+    video_summary: 'Fraud detection with human oversight', // MAYBE
   },
   {
     name: 'Candidate 5',
@@ -205,10 +205,10 @@ Retirement timing involves trade-offs that can't be quantified: more time with a
 The AI can show someone exactly what different retirement dates mean financially—but it can't weigh working another year against watching grandchildren grow up. That calculus is fundamentally human.`,
       },
     ],
-    scores: { q1c1: 5, q1c2: 4, q2c1: 5, q2c2: 4 },
+    scores: { q1c1: 4, q1c2: 4, q2c1: 4, q2c2: 3 },
     url_passed: true,
-    video_score: 9,
-    video_summary: 'AI retirement planning system',
+    video_score: 5,
+    video_summary: 'AI retirement planning system', // MAYBE
   },
   {
     name: 'Candidate 6',
@@ -233,10 +233,10 @@ Individual stock picking is fundamentally speculative. The AI can provide better
 Ownership of decisions is essential for learning. The AI should make users more capable, not more dependent.`,
       },
     ],
-    scores: { q1c1: 4, q1c2: 5, q2c1: 4, q2c2: 5 },
+    scores: { q1c1: 4, q1c2: 4, q2c1: 4, q2c2: 4 },
     url_passed: true,
-    video_score: 8,
-    video_summary: 'Investment research AI assistant',
+    video_score: 6,
+    video_summary: 'Investment research AI assistant', // MAYBE
   },
 
   // MEDIUM QUALITY (8 candidates)
@@ -259,10 +259,10 @@ I have experience building chatbots and recommendation systems that I think woul
 People have different priorities for their money. The AI might think someone should save more, but they might have personal reasons to spend on certain things. Only the human knows what matters to them.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 3, q2c1: 3, q2c2: 3 },
+    scores: { q1c1: 4, q1c2: 3, q2c1: 4, q2c2: 3 },
     url_passed: true,
-    video_score: 6,
-    video_summary: 'Budget categorization bot',
+    video_score: 4,
+    video_summary: 'Budget categorization bot', // SKIP - low video
   },
   {
     name: 'Candidate 8',
@@ -283,10 +283,10 @@ I want to work on AI that makes a difference in people's lives. Finance is an ar
 Big purchases like a car or vacation involve more than just financial calculations. People need to decide based on their values and life circumstances, not just what the numbers say. The AI provides information but shouldn't make these calls.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 3, q2c1: 3, q2c2: 4 },
+    scores: { q1c1: 4, q1c2: 4, q2c1: 3, q2c2: 4 },
     url_passed: true,
-    video_score: 6,
-    video_summary: 'Expense tracking system',
+    video_score: 7,
+    video_summary: 'Expense tracking system', // MAYBE
   },
   {
     name: 'Candidate 9',
@@ -307,10 +307,10 @@ I think there's a lot of potential to use AI to help people make better investme
 Selling a stock can have tax implications and other consequences that the system can't fully understand. The human needs to make the final call based on their complete financial situation.`,
       },
     ],
-    scores: { q1c1: 2, q1c2: 3, q2c1: 3, q2c2: 3 },
+    scores: { q1c1: 3, q1c2: 4, q2c1: 3, q2c2: 4 },
     url_passed: true,
     video_score: 5,
-    video_summary: 'Stock alert notifications',
+    video_summary: 'Stock alert notifications', // MAYBE
   },
   {
     name: 'Candidate 10',
@@ -331,10 +331,10 @@ Building AI for finance is exciting because of the real-world impact. I want to 
 Everyone's situation is different. Some people need more of a buffer than others depending on job stability, health, and family. The AI can suggest but the human should decide what feels safe to them.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 2, q2c1: 4, q2c2: 3 },
+    scores: { q1c1: 4, q1c2: 3, q2c1: 4, q2c2: 3 },
     url_passed: true,
-    video_score: 6,
-    video_summary: 'Savings gamification app',
+    video_score: 3,
+    video_summary: 'Savings gamification app', // SKIP - low video
   },
   {
     name: 'Candidate 11',
@@ -355,10 +355,10 @@ I have a background in data science and I'm interested in applying ML to financi
 Crypto is highly volatile and speculative. People need to make their own choices about risk. The AI can show data and trends but shouldn't recommend specific coins to buy.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 3, q2c1: 3, q2c2: 3 },
+    scores: { q1c1: 3, q1c2: 4, q2c1: 4, q2c2: 3 },
     url_passed: true,
-    video_score: 5,
-    video_summary: 'Crypto portfolio tracker',
+    video_score: 6,
+    video_summary: 'Crypto portfolio tracker', // MAYBE
   },
   {
     name: 'Candidate 12',
@@ -379,10 +379,10 @@ I'm looking for a role where I can build AI that helps everyday people. Finance 
 Group dynamics and relationships are complicated. The AI can suggest fair splits mathematically, but people might want to pay more or less based on their relationship with others in the group. Only humans understand these social dynamics.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 4, q2c1: 2, q2c2: 3 },
-    url_passed: true,
-    video_score: 6,
-    video_summary: 'AI bill splitting app',
+    scores: { q1c1: 4, q1c2: 4, q2c1: 3, q2c2: 4 },
+    url_passed: false,
+    video_score: 7,
+    video_summary: 'AI bill splitting app', // SKIP - URL fails
   },
   {
     name: 'Candidate 13',
@@ -403,10 +403,10 @@ I have NLP experience that I think could be valuable for building AI features. T
 News can be misleading or out of context. Even with AI summarization, humans need to interpret what the news means for their specific situation and decide whether to change their investments accordingly.`,
       },
     ],
-    scores: { q1c1: 4, q1c2: 3, q2c1: 3, q2c2: 3 },
+    scores: { q1c1: 4, q1c2: 3, q2c1: 4, q2c2: 3 },
     url_passed: true,
-    video_score: 5,
-    video_summary: 'Financial news summarizer',
+    video_score: 4,
+    video_summary: 'Financial news summarizer', // SKIP - low video
   },
   {
     name: 'Candidate 14',
@@ -427,10 +427,10 @@ I'm excited about the AI Builder role because it combines my technical skills wi
 What seems like a waste of money might be important to someone. Maybe they're not using a gym membership now but plan to start next month. The AI can highlight spending patterns, but only the person knows what they actually value.`,
       },
     ],
-    scores: { q1c1: 3, q1c2: 3, q2c1: 4, q2c2: 3 },
+    scores: { q1c1: 3, q1c2: 4, q2c1: 3, q2c2: 4 },
     url_passed: true,
-    video_score: 6,
-    video_summary: 'Subscription manager tool',
+    video_score: 5,
+    video_summary: 'Subscription manager tool', // MAYBE
   },
 
   // LOW QUALITY (6 candidates)
@@ -449,10 +449,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `The human should decide when to use the AI. The AI is just a tool so the human is always in control of everything important.`,
       },
     ],
-    scores: { q1c1: 1, q1c2: 1, q2c1: 1, q2c2: 1 },
-    url_passed: false,
+    scores: { q1c1: 3, q1c2: 3, q2c1: 3, q2c2: 3 },
+    url_passed: true,
     video_score: 3,
-    video_summary: 'Unrelated todo app',
+    video_summary: 'Unrelated todo app', // SKIP - low video
   },
   {
     name: 'Candidate 16',
@@ -469,10 +469,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `Humans should make all important decisions. AI is good for simple tasks but anything that matters should have a human doing it. My system would let humans override the AI anytime.`,
       },
     ],
-    scores: { q1c1: 1, q1c2: 1, q2c1: 1, q2c2: 1 },
-    url_passed: false,
+    scores: { q1c1: 2, q1c2: 2, q2c1: 2, q2c2: 2 },
+    url_passed: true,
     video_score: 2,
-    video_summary: 'Personal portfolio website',
+    video_summary: 'Personal portfolio website', // SKIP - questions fail
   },
   {
     name: 'Candidate 17',
@@ -489,10 +489,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `All money decisions should be made by humans because AI can make mistakes. The AI should only suggest things and never actually do anything without asking first.`,
       },
     ],
-    scores: { q1c1: 1, q1c2: 1, q2c1: 2, q2c2: 1 },
+    scores: { q1c1: 3, q1c2: 4, q2c1: 3, q2c2: 3 },
     url_passed: false,
-    video_score: null,
-    video_summary: null,
+    video_score: 6,
+    video_summary: 'Basic ML demo', // SKIP - URL fails
   },
   {
     name: 'Candidate 18',
@@ -509,10 +509,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `The human should decide everything important. AI is just a helper. In my system the human would be in charge and the AI would assist them.`,
       },
     ],
-    scores: { q1c1: 2, q1c2: 1, q2c1: 1, q2c2: 1 },
-    url_passed: false,
-    video_score: 2,
-    video_summary: 'Basic hello world repo',
+    scores: { q1c1: 4, q1c2: 3, q2c1: 3, q2c2: 4 },
+    url_passed: true,
+    video_score: 4,
+    video_summary: 'Basic hello world repo', // SKIP - low video
   },
   {
     name: 'Candidate 19',
@@ -529,10 +529,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `I think buying and selling should be human decisions. AI can help with analysis but the person should always click the button themselves.`,
       },
     ],
-    scores: { q1c1: 1, q1c2: 1, q2c1: 2, q2c2: 2 },
-    url_passed: false,
-    video_score: 3,
-    video_summary: 'No demo provided',
+    scores: { q1c1: 3, q1c2: 3, q2c1: 4, q2c2: 3 },
+    url_passed: true,
+    video_score: null,
+    video_summary: null, // MAYBE - no video yet
   },
   {
     name: 'Candidate 20',
@@ -549,10 +549,10 @@ What seems like a waste of money might be important to someone. Maybe they're no
         text: `Humans should decide about money since it's personal. The AI helps but final say goes to the user. This is important for trust.`,
       },
     ],
-    scores: { q1c1: 2, q1c2: 1, q2c1: 2, q2c2: 1 },
-    url_passed: false,
-    video_score: 2,
-    video_summary: 'LinkedIn profile only',
+    scores: { q1c1: 3, q1c2: 4, q2c1: 4, q2c2: 3 },
+    url_passed: true,
+    video_score: 8,
+    video_summary: 'Solid AI assistant demo', // PRIORITY
   },
 ];
 
