@@ -443,6 +443,11 @@ export default function DashboardPage() {
                         )
                       : null;
 
+                    // Determine if still evaluating
+                    const textEvalComplete = submission.evaluation !== null;
+                    const videoEvalComplete = !submission.video_path || submission.evaluation?.video_score != null;
+                    const isEvaluating = !textEvalComplete || !videoEvalComplete;
+
                     return (
                       <TableRow
                         key={submission.id}
@@ -459,7 +464,14 @@ export default function DashboardPage() {
                             : "-"}
                         </TableCell>
                         <TableCell className="font-medium text-foreground">
-                          {submission.candidate_name}
+                          <div className="flex items-center gap-2">
+                            {submission.candidate_name}
+                            {isEvaluating && (
+                              <span className="text-warning text-sm">
+                                Evaluating<span className="animate-blink">_</span>
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {avgScore !== null ? (
@@ -469,9 +481,7 @@ export default function DashboardPage() {
                               <span className="text-destructive">FAIL</span>
                             )
                           ) : (
-                            <span className="text-warning">
-                              Evaluating<span className="animate-blink">_</span>
-                            </span>
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -482,9 +492,7 @@ export default function DashboardPage() {
                               <span className="text-destructive">FAIL</span>
                             )
                           ) : (
-                            <span className="text-warning">
-                              Evaluating<span className="animate-blink">_</span>
-                            </span>
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -500,10 +508,6 @@ export default function DashboardPage() {
                             >
                               {submission.evaluation.video_score}/10
                             </Badge>
-                          ) : submission.video_path ? (
-                            <span className="text-warning">
-                              Evaluating<span className="animate-blink">_</span>
-                            </span>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
@@ -516,13 +520,9 @@ export default function DashboardPage() {
                             const bothPass = qPass && urlPass;
                             const videoScore = submission.evaluation?.video_score;
 
-                            // Still evaluating questions or URL
-                            if (avgScore === null || !submission.evaluation) {
-                              return (
-                                <span className="text-warning">
-                                  Evaluating<span className="animate-blink">_</span>
-                                </span>
-                              );
+                            // Still evaluating - show dash
+                            if (!submission.evaluation) {
+                              return <span className="text-muted-foreground">-</span>;
                             }
 
                             if (!bothPass) {
@@ -531,9 +531,7 @@ export default function DashboardPage() {
 
                             if (videoScore == null) {
                               return submission.video_path ? (
-                                <span className="text-warning">
-                                  Evaluating<span className="animate-blink">_</span>
-                                </span>
+                                <span className="text-muted-foreground">-</span>
                               ) : (
                                 <Badge variant="warning">◇ Maybe</Badge>
                               );
