@@ -14,20 +14,15 @@ ctx.fillRect(0, 0, width, height);
 
 // Green diamond
 ctx.fillStyle = '#00ff88';
-ctx.font = '120px serif';
+ctx.font = '200px serif';
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('◆', width / 2, height / 2 - 80);
+ctx.fillText('◆', width / 2, height / 2 - 100);
 
 // SIGNAL text
 ctx.fillStyle = '#ffffff';
-ctx.font = 'bold 72px monospace';
-ctx.fillText('SIGNAL', width / 2, height / 2 + 60);
-
-// Subtitle
-ctx.fillStyle = '#888888';
-ctx.font = '24px monospace';
-ctx.fillText('AI-Native Hiring Infrastructure', width / 2, height / 2 + 120);
+ctx.font = 'bold 120px monospace';
+ctx.fillText('SIGNAL', width / 2, height / 2 + 100);
 
 // Save to file
 const buffer = canvas.toBuffer('image/png');
