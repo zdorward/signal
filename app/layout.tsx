@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
   },
+  openGraph: {
+    images: ["/og-image.png"],
+    title: "Signal — AI-Native Hiring Infrastructure",
+    description: "The infrastructure that makes proof-of-work hiring scale.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
