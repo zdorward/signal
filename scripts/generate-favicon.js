@@ -9,11 +9,7 @@ sizes.forEach(size => {
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
 
-  // Background
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(0, 0, size, size);
-
-  // Green diamond
+  // Green diamond (no background - transparent)
   ctx.fillStyle = '#00ff88';
   ctx.beginPath();
   ctx.moveTo(size / 2, size * 0.125);  // top
@@ -42,8 +38,6 @@ sizes.forEach(size => {
 // Also generate a 32x32 as favicon.png for general use
 const canvas = createCanvas(32, 32);
 const ctx = canvas.getContext('2d');
-ctx.fillStyle = '#0a0a0a';
-ctx.fillRect(0, 0, 32, 32);
 ctx.fillStyle = '#00ff88';
 ctx.beginPath();
 ctx.moveTo(16, 4);
