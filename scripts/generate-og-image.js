@@ -26,7 +26,7 @@ ctx.fillText('SIGNAL', width / 2, height / 2 + 100);
 
 // Save to file
 const buffer = canvas.toBuffer('image/png');
-const outputPath = path.join(__dirname, '..', 'public', 'og-image.png');
+const outputPath = path.join(__dirname, '..', 'public', 'og-image-v2.png');
 fs.writeFileSync(outputPath, buffer);
 
 console.log('OG image generated at:', outputPath);
