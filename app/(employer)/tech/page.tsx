@@ -16,6 +16,7 @@ export default function TechPage() {
           href="https://github.com/zdorward/signal"
           target="_blank"
           rel="noopener noreferrer"
+          className="inline-block"
         >
           <Button variant="outline" className="gap-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
